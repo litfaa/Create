@@ -36,6 +36,7 @@ public class AllCommands {
 				.then(PonderCommand.register())
 				.then(CloneCommand.register())
 				.then(GlueCommand.register())
+				.then(CreateTestCommand.register())
 
 				// utility
 				.then(util)
