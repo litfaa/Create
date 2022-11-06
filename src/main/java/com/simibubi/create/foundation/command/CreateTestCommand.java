@@ -24,6 +24,9 @@ import com.simibubi.create.foundation.networking.AllPackets;
 import com.simibubi.create.foundation.networking.SimplePacketBase;
 import com.simibubi.create.foundation.utility.Components;
 
+import io.github.fabricators_of_create.porting_lib.util.EnvExecutor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -47,7 +50,7 @@ public class CreateTestCommand {
 	public static final Component INFO_MISSING = Components.literal("Something went wrong! No info found. Try again?");
 	public static final Component ERROR_SAVING = Components.literal("Error saving structure! Check the log for details.");
 	public static final Component USE_INFO = Components.literal(
-			"Use a Schematic and Quill to select an area. run /create test export [folder1] [folder2] <name> to save the selected area as a gametest."
+			"Use a Schematic and Quill to select an area. run /create test export <name> [subfolder] [subsubfolder] to save the selected area as a gametest."
 	);
 	public static final Path EXPORT_PATH = getPathForEnv();
 	private static final Map<UUID, ExportInfo> INFO_IN_TRANSIT = new HashMap<>();
@@ -56,32 +59,6 @@ public class CreateTestCommand {
 		return literal("test")
 				.requires(cs -> AllCommands.SOURCE_IS_PLAYER.test(cs) && cs.hasPermission(2))
 				.then(literal("export")
-						.then(argument("folder1", StringArgumentType.word())
-								.then(argument("name", StringArgumentType.word())
-										.executes(ctx -> {
-											startExport(
-													StringArgumentType.getString(ctx, "name"),
-													StringArgumentType.getString(ctx, "folder1"),
-													null,
-													ctx.getSource().getPlayerOrException()
-											);
-											return 0;
-										})
-								)
-								.then(argument("folder2", StringArgumentType.word())
-										.then(argument("name", StringArgumentType.word())
-												.executes(ctx -> {
-													startExport(
-															StringArgumentType.getString(ctx, "name"),
-															StringArgumentType.getString(ctx, "folder1"),
-															StringArgumentType.getString(ctx, "folder2"),
-															ctx.getSource().getPlayerOrException()
-													);
-													return 0;
-												})
-										)
-								)
-						)
 						.then(argument("name", StringArgumentType.word())
 								.executes(ctx -> {
 									startExport(
@@ -92,6 +69,28 @@ public class CreateTestCommand {
 									);
 									return 0;
 								})
+								.then(argument("subfolder", StringArgumentType.word())
+										.executes(ctx -> {
+											startExport(
+													StringArgumentType.getString(ctx, "name"),
+													StringArgumentType.getString(ctx, "subfolder"),
+													null,
+													ctx.getSource().getPlayerOrException()
+											);
+											return 0;
+										})
+										.then(argument("subsubfolder", StringArgumentType.word())
+												.executes(ctx -> {
+													startExport(
+															StringArgumentType.getString(ctx, "name"),
+															StringArgumentType.getString(ctx, "subfolder"),
+															StringArgumentType.getString(ctx, "subsubfolder"),
+															ctx.getSource().getPlayerOrException()
+													);
+													return 0;
+												})
+										)
+								)
 						)
 				)
 				.executes(ctx -> {
@@ -100,11 +99,10 @@ public class CreateTestCommand {
 				});
 	}
 
-	private static void startExport(String name, @Nullable String folder1, @Nullable String folder2, ServerPlayer player) throws CommandSyntaxException {
+	private static void startExport(String name, @Nullable String subfolder, @Nullable String subsubfolder, ServerPlayer player) throws CommandSyntaxException {
 		verifyName(name);
 		AllPackets.channel.sendToClient(new TestExportCommandS2C(), player);
-		send(player, Components.literal("Awaiting data from client..."));
-		ExportInfo info = new ExportInfo(name, folder1, folder2);
+		ExportInfo info = new ExportInfo(name, subfolder, subsubfolder);
 		INFO_IN_TRANSIT.put(player.getUUID(), info);
 	}
 
@@ -145,10 +143,10 @@ public class CreateTestCommand {
 
 	private static Path getExportPath(ExportInfo info) {
 		Path exported = EXPORT_PATH;
-		if (info.folder1 != null) {
-			exported = exported.resolve(info.folder1);
-			if (info.folder2 != null) {
-				exported = exported.resolve(info.folder2);
+		if (info.subfolder != null) {
+			exported = exported.resolve(info.subfolder);
+			if (info.subsubfolder != null) {
+				exported = exported.resolve(info.subsubfolder);
 			}
 		}
 		exported = exported.resolve(info.name + ".snbt");
@@ -172,8 +170,9 @@ public class CreateTestCommand {
 		FabricLoader loader = FabricLoader.getInstance();
 		Path export;
 		if (loader.isDevelopmentEnvironment()) {
-			export = loader.getGameDir()
-					.getParent()
+			export = loader.getGameDir().toAbsolutePath()
+					// some reason gameDir is run/. on server and run/ on client, this unifies it
+					.resolve("temp").normalize().getParent().getParent()
 					.resolve("src")
 					.resolve("main")
 					.resolve("resources")
@@ -199,7 +198,7 @@ public class CreateTestCommand {
 		send(player, USE_INFO);
 	}
 
-	private record ExportInfo(String name, String folder1, String folder2) {
+	private record ExportInfo(String name, String subfolder, String subsubfolder) {
 	}
 
 	public static class TestExportCommandS2C extends SimplePacketBase {
@@ -216,6 +215,11 @@ public class CreateTestCommand {
 
 		@Override
 		public void handle(Supplier<Context> context) {
+			EnvExecutor.runWhenOn(EnvType.CLIENT, () -> () -> handleClient());
+		}
+
+		@Environment(EnvType.CLIENT)
+		private static void handleClient() {
 			SchematicAndQuillHandler handler = CreateClient.SCHEMATIC_AND_QUILL_HANDLER;
 			if (handler.firstPos != null && handler.secondPos != null) {
 				AllPackets.channel.sendToServer(new TestExportCommandC2S());
