@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "id": "create",
   "version": "${version}",
-
   "name": "Create",
   "description": "Technology that empowers the player.",
   "authors": [
@@ -27,6 +26,11 @@
     ],
     "fabric-datagen": [
       "com.simibubi.create.CreateData"
+    ],
+    "fabric-gametest": [
+      "com.simibubi.create.gametest.TestFluids",
+      "com.simibubi.create.gametest.TestMisc",
+      "com.simibubi.create.gametest.TestProcessing"
     ],
     "emi": [
       "com.simibubi.create.compat.emi.CreateEmiPlugin"
