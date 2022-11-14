@@ -28,10 +28,10 @@ import io.github.fabricators_of_create.porting_lib.util.EnvExecutor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.structures.NbtToSnbt;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -42,8 +42,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 
 public class CreateTestCommand {
 	public static final DynamicCommandExceptionType INVALID_NAME = new DynamicCommandExceptionType(c -> Components.literal("Invalid character in name: " + c));
@@ -126,14 +126,14 @@ public class CreateTestCommand {
 		BlockPos size = highCorner.subtract(lowCorner);
 
 		ServerLevel level = player.getLevel();
-		StructureManager structureManager = level.getStructureManager();
+		StructureTemplateManager structureManager = level.getStructureManager();
 		StructureTemplate structure = structureManager.getOrCreate(Create.asResource(info.name));
 		structure.fillFromWorld(level, lowCorner, size, true, Blocks.STRUCTURE_VOID);
 		CompoundTag data = structure.save(new CompoundTag());
 		String snbt = NbtUtils.structureToSnbt(data);
 		Path exported = getExportPath(info);
 		try {
-			NbtToSnbt.writeSnbt(exported, snbt);
+			NbtToSnbt.writeSnbt(CachedOutput.NO_CACHE, exported, snbt);
 			send(player, Components.literal("Successfully exported '" + info.name + "' to: " + exported));
 		} catch (IOException e) {
 			send(player, ERROR_SAVING);
@@ -154,7 +154,7 @@ public class CreateTestCommand {
 	}
 
 	private static void send(Player player, Component message) {
-		player.sendMessage(message, Util.NIL_UUID);
+		player.sendSystemMessage(message);
 	}
 
 	private static void verifyName(String name) throws CommandSyntaxException {
