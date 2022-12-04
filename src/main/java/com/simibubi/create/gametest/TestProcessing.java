@@ -4,15 +4,14 @@ import com.simibubi.create.Create;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
-public class TestProcessing {
+public class TestProcessing extends CreateTestBase {
 	public static final String PATH = Create.ID + ":processing/";
 
 	@GameTest(template = PATH + "sand_washing", timeoutTicks = 40 * 20) // 30 seconds until timeout
-	public static void sandWashing(GameTestHelper helper) {
+	public static void sandWashing(CreateGameTestHelper helper) {
 		BlockPos leverPos = new BlockPos(5, 3, 1);
 		helper.pullLever(leverPos);
 		BlockPos chestPos = new BlockPos(8, 3, 2);

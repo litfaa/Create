@@ -7,7 +7,6 @@ import com.simibubi.create.content.schematics.block.SchematicannonTileEntity.Sta
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -18,11 +17,11 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 
-public class TestMisc {
+public class TestMisc extends CreateTestBase {
 	public static final String PATH = Create.ID + ":misc/";
 
 	@GameTest(template = PATH + "schematicannon", timeoutTicks = 15 * 20)
-	public static void schematicannon(GameTestHelper helper) {
+	public static void schematicannon(CreateGameTestHelper helper) {
 		// get schematic
 		BlockPos placardPos = new BlockPos(3, 3, 7);
 		PlacardTileEntity placard = (PlacardTileEntity) helper.getBlockEntity(placardPos);
@@ -48,7 +47,7 @@ public class TestMisc {
 	}
 
 	@GameTest(template = PATH + "shearing")
-	public static void shearing(GameTestHelper helper) {
+	public static void shearing(CreateGameTestHelper helper) {
 		BlockPos sheepPos = new BlockPos(2, 1, 2);
 		BlockPos sheepAbsolutePos = helper.absolutePos(sheepPos);
 		AABB area = new AABB(sheepAbsolutePos).inflate(1);
