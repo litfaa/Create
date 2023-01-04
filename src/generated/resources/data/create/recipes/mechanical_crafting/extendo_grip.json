@@ -6,13 +6,13 @@
       "item": "create:brass_hand"
     },
     "L": {
-      "tag": "c:ingots/brass"
+      "tag": "c:brass_ingots"
     },
     "R": {
       "item": "create:precision_mechanism"
     },
     "S": {
-      "tag": "c:rods/wooden"
+      "tag": "c:wooden_rods"
     }
   },
   "pattern": [

@@ -3,8 +3,6 @@ package com.simibubi.create.content.logistics.trains.management.edgePoint.observ
 import com.simibubi.create.AllTileEntities;
 import com.simibubi.create.content.contraptions.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.ITE;
-import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
-import com.simibubi.create.foundation.tileEntity.behaviour.filtering.FilteringBehaviour;
 
 import io.github.fabricators_of_create.porting_lib.block.ConnectableRedstoneBlock;
 import net.minecraft.core.BlockPos;
@@ -58,11 +56,8 @@ public class TrackObserverBlock extends Block implements ITE<TrackObserverTileEn
 	}
 
 	@Override
-	public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
-		if (pState.hasBlockEntity() && (!pState.is(pNewState.getBlock()) || !pNewState.hasBlockEntity())) {
-			TileEntityBehaviour.destroy(pLevel, pPos, FilteringBehaviour.TYPE);
-			pLevel.removeBlockEntity(pPos);
-		}
+	public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+		ITE.onRemove(state, worldIn, pos, newState);
 	}
 
 }

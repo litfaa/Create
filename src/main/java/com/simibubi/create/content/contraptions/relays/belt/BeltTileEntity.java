@@ -189,8 +189,15 @@ public class BeltTileEntity extends KineticTileEntity implements SidedStorageBlo
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void destroy() {
+		super.destroy();
+		if (isController())
+			getInventory().ejectAll();
+	}
+
+	@Override
+	public void invalidate() {
+		super.invalidate();
 		itemHandler = null;
 	}
 

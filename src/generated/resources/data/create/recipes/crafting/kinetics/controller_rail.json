@@ -2,13 +2,13 @@
   "type": "minecraft:crafting_shaped",
   "key": {
     "A": {
-      "tag": "c:ingots/gold"
+      "tag": "c:gold_ingots"
     },
     "E": {
       "item": "create:electron_tube"
     },
     "S": {
-      "tag": "c:rods/wooden"
+      "tag": "c:wooden_rods"
     }
   },
   "pattern": [

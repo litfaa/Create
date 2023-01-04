@@ -1,5 +1,6 @@
 package com.simibubi.create;
 
+import static com.simibubi.create.Create.REGISTRATE;
 import static net.minecraft.world.item.Items.BUCKET;
 import static net.minecraft.world.item.Items.GLASS_BOTTLE;
 import static net.minecraft.world.item.Items.HONEY_BOTTLE;
@@ -14,7 +15,6 @@ import com.simibubi.create.content.contraptions.fluids.potion.PotionFluid;
 import com.simibubi.create.content.contraptions.fluids.potion.PotionFluid.BottleType;
 import com.simibubi.create.content.contraptions.fluids.potion.PotionFluidHandler;
 import com.simibubi.create.content.palettes.AllPaletteStoneTypes;
-import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.utility.NBTHelper;
 import com.tterrag.registrate.fabric.SimpleFlowableFluid;
 import com.tterrag.registrate.util.entry.FluidEntry;
@@ -50,8 +50,6 @@ public class AllFluids {
 	// we can't make a block take 108000, since then it can't fit in the basin
 	public static final long HONEY_BOTTLE_AMOUNT = FluidConstants.BLOCK / 4;
 
-	private static final CreateRegistrate REGISTRATE = Create.registrate();
-
 	// fabric: various Attributes/Types replaced with corresponding handlers
 
 	public static final FluidEntry<PotionFluid> POTION =
@@ -84,7 +82,7 @@ public class AllFluids {
 					.tag(AllFluidTags.HONEY.tag, FluidTags.WATER) // fabric: water tag controls physics
 					.source(SimpleFlowableFluid.Source::new) // TODO: remove when Registrate fixes FluidBuilder
 					.bucket()
-					.tag(AllTags.forgeItemTag("buckets/honey"))
+					.tag(AllTags.forgeItemTag("honey_buckets"))
 					.build()
 					.onRegisterAfter(Registry.ITEM_REGISTRY, honey -> {
 						Fluid source = honey.getSource();
@@ -206,7 +204,7 @@ public class AllFluids {
 
 		@Override
 		public Component getName(FluidVariant fluidVariant) {
-			return name;
+			return name.copy();
 		}
 
 		@Override

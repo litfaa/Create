@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "key": {
     "A": {
-      "tag": "c:nuggets/iron"
+      "tag": "c:iron_nuggets"
     },
     "S": {
       "tag": "minecraft:wool"

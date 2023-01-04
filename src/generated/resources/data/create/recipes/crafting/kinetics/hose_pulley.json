@@ -8,7 +8,7 @@
       "item": "minecraft:dried_kelp_block"
     },
     "I": {
-      "tag": "c:plates/copper"
+      "tag": "c:copper_plates"
     }
   },
   "pattern": [

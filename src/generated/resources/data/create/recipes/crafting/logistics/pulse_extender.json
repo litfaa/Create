@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "key": {
     "C": {
-      "tag": "c:plates/brass"
+      "tag": "c:brass_plates"
     },
     "R": {
       "tag": "c:dusts/redstone"

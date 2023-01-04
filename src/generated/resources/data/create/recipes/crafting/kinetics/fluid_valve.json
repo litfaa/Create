@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     {
-      "tag": "c:plates/iron"
+      "tag": "c:iron_plates"
     },
     {
       "item": "create:fluid_pipe"

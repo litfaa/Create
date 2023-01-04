@@ -58,6 +58,7 @@ import com.simibubi.create.content.logistics.packet.TunnelFlapPacket;
 import com.simibubi.create.content.logistics.trains.TrackGraphRequestPacket;
 import com.simibubi.create.content.logistics.trains.TrackGraphRollCallPacket;
 import com.simibubi.create.content.logistics.trains.TrackGraphSyncPacket;
+import com.simibubi.create.content.logistics.trains.entity.CarriageDataUpdatePacket;
 import com.simibubi.create.content.logistics.trains.entity.TrainPacket;
 import com.simibubi.create.content.logistics.trains.entity.TrainPromptPacket;
 import com.simibubi.create.content.logistics.trains.entity.TrainRelocationPacket;
@@ -191,6 +192,8 @@ public enum AllPackets {
 		PLAY_TO_CLIENT),
 	TEST_EXPORT_S2C(TestExportCommandS2C.class, TestExportCommandS2C::new, PLAY_TO_CLIENT)
 
+	// fabric: extra packet in place of custom entity data serializer
+	CARRIAGE_DATA_UPDATE(CarriageDataUpdatePacket.class, CarriageDataUpdatePacket::new, PLAY_TO_CLIENT),
 	;
 
 	public static final ResourceLocation CHANNEL_NAME = Create.asResource("main");

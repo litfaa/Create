@@ -9,7 +9,6 @@ import com.simibubi.create.AllTileEntities;
 import com.simibubi.create.content.contraptions.base.HorizontalKineticBlock;
 import com.simibubi.create.foundation.block.ITE;
 
-import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -127,7 +126,7 @@ public class CopperBacktankBlock extends HorizontalKineticBlock
 		BlockHitResult p_225533_6_) {
 		if (player == null)
 			return InteractionResult.PASS;
-		if (player instanceof FakeServerPlayer)
+		if (player.isFake())
 			return InteractionResult.PASS;
 		if (player.isShiftKeyDown())
 			return InteractionResult.PASS;

@@ -4,6 +4,7 @@ import static com.simibubi.create.AllTags.forgeItemTag;
 import static com.simibubi.create.AllTags.AllItemTags.CREATE_INGOTS;
 import static com.simibubi.create.AllTags.AllItemTags.CRUSHED_ORES;
 import static com.simibubi.create.AllTags.AllItemTags.PLATES;
+import static com.simibubi.create.Create.REGISTRATE;
 import static com.simibubi.create.content.AllSections.CURIOSITIES;
 import static com.simibubi.create.content.AllSections.KINETICS;
 import static com.simibubi.create.content.AllSections.LOGISTICS;
@@ -81,8 +82,9 @@ import net.minecraft.world.item.Rarity;
 
 public class AllItems {
 
-	private static final CreateRegistrate REGISTRATE = Create.registrate()
-		.creativeModeTab(() -> Create.BASE_CREATIVE_TAB);
+	static {
+		REGISTRATE.creativeModeTab(() -> Create.BASE_CREATIVE_TAB);
+	}
 
 	// Schematics
 
@@ -95,7 +97,7 @@ public class AllItems {
 		DOUGH = taggedIngredient("dough", forgeItemTag("dough"), forgeItemTag("dough/wheat")),
 		CINDER_FLOUR = ingredient("cinder_flour"), ROSE_QUARTZ = ingredient("rose_quartz"),
 		POLISHED_ROSE_QUARTZ = ingredient("polished_rose_quartz"), POWDERED_OBSIDIAN = ingredient("powdered_obsidian"),
-		STURDY_SHEET = taggedIngredient("sturdy_sheet", forgeItemTag("plates/obsidian"), PLATES.tag),
+		STURDY_SHEET = taggedIngredient("sturdy_sheet", forgeItemTag("obsidian_plates"), PLATES.tag),
 		PROPELLER = ingredient("propeller"), WHISK = ingredient("whisk"), BRASS_HAND = ingredient("brass_hand"),
 		CRAFTER_SLOT_COVER = ingredient("crafter_slot_cover"), ELECTRON_TUBE = ingredient("electron_tube");
 
@@ -156,11 +158,11 @@ public class AllItems {
 		.register();
 
 	public static final ItemEntry<Item> RAW_ZINC =
-		taggedIngredient("raw_zinc", forgeItemTag("raw_materials/zinc"), TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation("c", "raw_materials")));
+		taggedIngredient("raw_zinc", forgeItemTag("zinc_raw_materials"), TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation("c", "raw_materials")));
 
 	public static final ItemEntry<Item> ANDESITE_ALLOY = taggedIngredient("andesite_alloy", CREATE_INGOTS.tag),
-		ZINC_INGOT = taggedIngredient("zinc_ingot", forgeItemTag("ingots/zinc"), CREATE_INGOTS.tag),
-		BRASS_INGOT = taggedIngredient("brass_ingot", forgeItemTag("ingots/brass"), CREATE_INGOTS.tag);
+		ZINC_INGOT = taggedIngredient("zinc_ingot", forgeItemTag("zinc_ingots"), CREATE_INGOTS.tag),
+		BRASS_INGOT = taggedIngredient("brass_ingot", forgeItemTag("brass_ingots"), CREATE_INGOTS.tag);
 
 	public static final ItemEntry<ChromaticCompoundItem> CHROMATIC_COMPOUND =
 		REGISTRATE.item("chromatic_compound", ChromaticCompoundItem::new)
@@ -179,9 +181,9 @@ public class AllItems {
 			.register();
 
 	public static final ItemEntry<Item> COPPER_NUGGET =
-		taggedIngredient("copper_nugget", forgeItemTag("nuggets/copper"), Tags.Items.NUGGETS),
-		ZINC_NUGGET = taggedIngredient("zinc_nugget", forgeItemTag("nuggets/zinc"), Tags.Items.NUGGETS),
-		BRASS_NUGGET = taggedIngredient("brass_nugget", forgeItemTag("nuggets/brass"), Tags.Items.NUGGETS);
+		taggedIngredient("copper_nugget", forgeItemTag("copper_nuggets"), Tags.Items.NUGGETS),
+		ZINC_NUGGET = taggedIngredient("zinc_nugget", forgeItemTag("zinc_nuggets"), Tags.Items.NUGGETS),
+		BRASS_NUGGET = taggedIngredient("brass_nugget", forgeItemTag("brass_nuggets"), Tags.Items.NUGGETS);
 
 	public static final ItemEntry<ExperienceNuggetItem> EXP_NUGGET =
 		REGISTRATE.item("experience_nugget", ExperienceNuggetItem::new)
@@ -191,10 +193,10 @@ public class AllItems {
 			.register();
 
 	public static final ItemEntry<Item> COPPER_SHEET =
-		taggedIngredient("copper_sheet", forgeItemTag("plates/copper"), PLATES.tag),
-		BRASS_SHEET = taggedIngredient("brass_sheet", forgeItemTag("plates/brass"), PLATES.tag),
-		IRON_SHEET = taggedIngredient("iron_sheet", forgeItemTag("plates/iron"), PLATES.tag),
-		GOLDEN_SHEET = taggedIngredient("golden_sheet", forgeItemTag("plates/gold"), PLATES.tag, ItemTags.PIGLIN_LOVED),
+		taggedIngredient("copper_sheet", forgeItemTag("copper_plates"), PLATES.tag),
+		BRASS_SHEET = taggedIngredient("brass_sheet", forgeItemTag("brass_plates"), PLATES.tag),
+		IRON_SHEET = taggedIngredient("iron_sheet", forgeItemTag("iron_plates"), PLATES.tag),
+		GOLDEN_SHEET = taggedIngredient("golden_sheet", forgeItemTag("gold_plates"), PLATES.tag, ItemTags.PIGLIN_LOVED),
 
 		CRUSHED_IRON = taggedIngredient("crushed_iron_ore", CRUSHED_ORES.tag),
 		CRUSHED_GOLD = taggedIngredient("crushed_gold_ore", CRUSHED_ORES.tag, ItemTags.PIGLIN_LOVED),
@@ -414,7 +416,7 @@ public class AllItems {
 		String metalName = metal.getName();
 		return REGISTRATE
 			.item("crushed_" + metalName + "_ore",
-				props -> new TagDependentIngredientItem(props, AllTags.forgeItemTag("ores/" + metalName)))
+				props -> new TagDependentIngredientItem(props, AllTags.forgeItemTag(metalName + "_ores")))
 			.tag(CRUSHED_ORES.tag)
 			.register();
 	}

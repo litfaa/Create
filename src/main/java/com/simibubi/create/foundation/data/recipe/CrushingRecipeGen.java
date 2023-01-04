@@ -238,10 +238,10 @@ public class CrushingRecipeGen extends ProcessingRecipeGen {
 	protected GeneratedRecipe moddedRawOre(CompatMetals metal, Supplier<ItemLike> result, int amount) {
 		String name = metal.getName();
 		return create("raw_" + name + (amount == 1 ? "_ore" : "_block"), b -> {
-			String prefix = amount == 1 ? "raw_materials/" : "storage_blocks/raw_";
+			String suffix = amount == 1 ? "_ores" : "_blocks";
 			return b.duration(400)
-				.withCondition(DefaultResourceConditions.itemTagsPopulated(AllTags.forgeItemTag(prefix + name)))
-				.require(AllTags.forgeItemTag(prefix + name))
+				.withCondition(DefaultResourceConditions.tagsPopulated(AllTags.forgeItemTag("raw_" + name + suffix)))
+				.require(AllTags.forgeItemTag("raw_" + name + suffix))
 				.output(result.get(), amount)
 				.output(.75f, AllItems.EXP_NUGGET.get(), amount);
 		});
@@ -250,10 +250,10 @@ public class CrushingRecipeGen extends ProcessingRecipeGen {
 	protected GeneratedRecipe moddedOre(CompatMetals metal, Supplier<ItemLike> result) {
 		String name = metal.getName();
 		return create(name + "_ore", b -> {
-			String prefix = "ores/";
+			String suffix = "_ores";
 			return b.duration(400)
-				.withCondition(DefaultResourceConditions.itemTagsPopulated(AllTags.forgeItemTag(prefix + name)))
-				.require(AllTags.forgeItemTag(prefix + name))
+				.withCondition(DefaultResourceConditions.tagsPopulated(AllTags.forgeItemTag(name + suffix)))
+				.require(AllTags.forgeItemTag(name + suffix))
 				.output(result.get(), 1)
 				.output(.75f, result.get(), 1)
 				.output(.75f, AllItems.EXP_NUGGET.get(), 1);

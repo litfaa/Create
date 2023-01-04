@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "key": {
     "#": {
-      "tag": "c:ingots/brass"
+      "tag": "c:brass_ingots"
     }
   },
   "pattern": [

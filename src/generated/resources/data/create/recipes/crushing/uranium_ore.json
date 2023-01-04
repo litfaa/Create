@@ -2,15 +2,15 @@
   "type": "create:crushing",
   "fabric:load_conditions": [
     {
-      "condition": "fabric:item_tags_populated",
+      "condition": "fabric:tags_populated",
       "values": [
-        "c:ores/uranium"
+        "c:uranium_ores"
       ]
     }
   ],
   "ingredients": [
     {
-      "tag": "c:ores/uranium"
+      "tag": "c:uranium_ores"
     }
   ],
   "processingTime": 400,

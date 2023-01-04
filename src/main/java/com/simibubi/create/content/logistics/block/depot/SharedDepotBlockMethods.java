@@ -10,7 +10,6 @@ import com.simibubi.create.foundation.tileEntity.behaviour.belt.DirectBeltInputB
 
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
-
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
@@ -19,7 +18,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -86,22 +84,6 @@ public class SharedDepotBlockMethods {
 
 		behaviour.tileEntity.notifyUpdate();
 		return InteractionResult.SUCCESS;
-	}
-
-	public static void onReplaced(BlockState state, Level worldIn, BlockPos pos, BlockState newState,
-		boolean isMoving) {
-		if (!state.hasBlockEntity() || state.getBlock() == newState.getBlock())
-			return;
-		DepotBehaviour behaviour = get(worldIn, pos);
-		if (behaviour == null)
-			return;
-		ItemHelper.dropContents(worldIn, pos, behaviour.processingOutputBuffer);
-		for (TransportedItemStack transportedItemStack : behaviour.incoming)
-			Containers.dropItemStack(worldIn, pos.getX(), pos.getY(), pos.getZ(), transportedItemStack.stack);
-		if (!behaviour.getHeldItemStack()
-			.isEmpty())
-			Containers.dropItemStack(worldIn, pos.getX(), pos.getY(), pos.getZ(), behaviour.getHeldItemStack());
-		worldIn.removeBlockEntity(pos);
 	}
 
 	public static void onLanded(BlockGetter worldIn, Entity entityIn) {

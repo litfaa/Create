@@ -268,6 +268,7 @@ public class EjectorTileEntity extends KineticTileEntity implements SidedStorage
 				if (extracted != 0)
 					addToLaunchedItems(var.toStack(ItemHelper.truncateLong(extracted)));
 			}
+			t.commit();
 		}
 	}
 
@@ -478,6 +479,12 @@ public class EjectorTileEntity extends KineticTileEntity implements SidedStorage
 	public Vec3 getLaunchedItemMotion(float time) {
 		return launcher.getGlobalVelocity(time, getFacing().getOpposite(), worldPosition)
 			.scale(.5f);
+	}
+	
+	@Override
+	public void destroy() {
+		super.destroy();
+		dropFlyingItems();
 	}
 
 	public void dropFlyingItems() {

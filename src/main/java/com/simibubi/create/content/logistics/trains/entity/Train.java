@@ -1053,7 +1053,7 @@ public class Train {
 					if (view.extract(held, 1, t) != 1)
 						continue;
 					fuelTicks += burnTime;
-					ItemStack containerItem = new ItemStack(held.getItem().getCraftingRemainingItem());
+					ItemStack containerItem = held.toStack().getRecipeRemainder();
 					if (!containerItem.isEmpty())
 						TransferUtil.insertItem(fuelItems, containerItem);
 					t.commit();

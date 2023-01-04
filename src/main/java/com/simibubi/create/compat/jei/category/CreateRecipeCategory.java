@@ -1,6 +1,5 @@
 package com.simibubi.create.compat.jei.category;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -11,12 +10,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.jetbrains.annotations.NotNull;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.simibubi.create.AllFluids;
-import com.simibubi.create.content.contraptions.fluids.potion.PotionFluidHandler;
 import com.simibubi.create.content.contraptions.processing.ProcessingOutput;
 import com.simibubi.create.foundation.config.AllConfigs;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
-import com.simibubi.create.foundation.utility.Components;
 import com.simibubi.create.foundation.utility.Lang;
 
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
@@ -170,17 +166,7 @@ public abstract class CreateRecipeCategory<T extends Recipe<?>> implements IReci
 
 			FluidStack fluidStack = fromJei(displayed.get());
 
-			if (fluidStack.getFluid().isSame(AllFluids.POTION.get())) {
-				Component name = fluidStack.getDisplayName();
-				if (tooltip.isEmpty())
-					tooltip.add(0, name);
-				else
-					tooltip.set(0, name);
-
-				ArrayList<Component> potionTooltip = new ArrayList<>();
-				PotionFluidHandler.addPotionTooltip(fluidStack, potionTooltip, 1);
-				tooltip.addAll(1, potionTooltip.stream().toList());
-			}
+			// fabric: don't need potion tooltip stuff, handled by attribute handler
 
 			long amountToUse = mbAmount == -1 ? fluidStack.getAmount() : mbAmount;
 			FluidUnit unit = AllConfigs.CLIENT.fluidUnitType.get();
@@ -189,9 +175,10 @@ public abstract class CreateRecipeCategory<T extends Recipe<?>> implements IReci
 			if (tooltip.isEmpty())
 				tooltip.add(0, text);
 			else {
-				List<Component> siblings = tooltip.get(0).getSiblings();
-				siblings.add(Components.literal(" "));
-				siblings.add(text);
+				// fabric: sibling strategy doesn't work some reason
+				Component name = tooltip.get(0);
+				Component nameWithAmount = name.copy().append(" ").append(text);
+				tooltip.set(0, nameWithAmount);
 			}
 		};
 	}

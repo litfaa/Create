@@ -5,7 +5,7 @@
       "item": "minecraft:iron_nugget"
     },
     "X": {
-      "tag": "c:glass/colorless"
+      "tag": "c:colorless_glass"
     }
   },
   "pattern": [

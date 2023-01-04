@@ -5,10 +5,10 @@
       "item": "create:andesite_alloy"
     },
     "P": {
-      "tag": "c:ingots/iron"
+      "tag": "c:iron_ingots"
     },
     "S": {
-      "tag": "c:nuggets/iron"
+      "tag": "c:iron_nuggets"
     }
   },
   "pattern": [

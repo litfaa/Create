@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.simibubi.create.Create;
 import com.simibubi.create.foundation.data.SimpleDatagenIngredient;
 import com.simibubi.create.foundation.data.recipe.Mods;
 import com.simibubi.create.foundation.fluid.FluidHelper;
@@ -15,11 +16,9 @@ import com.simibubi.create.foundation.utility.recipe.IRecipeTypeInfo;
 import com.tterrag.registrate.util.DataIngredient;
 
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-
 import net.fabricmc.fabric.api.resource.conditions.v1.ConditionJsonProvider;
 import net.fabricmc.fabric.api.resource.conditions.v1.DefaultResourceConditions;
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditions;
-import net.fabricmc.fabric.impl.datagen.FabricDataGenHelper;
 import net.minecraft.core.NonNullList;
 import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.resources.ResourceLocation;
@@ -98,11 +97,24 @@ public class ProcessingRecipeBuilder<T extends ProcessingRecipe<?>> {
 	}
 
 	public T build() {
+		validateFluidAmounts();
 		return factory.create(params);
 	}
 
 	public void build(Consumer<FinishedRecipe> consumer) {
 		consumer.accept(new DataGenResult<>(build(), recipeConditions));
+	}
+
+	public static final long[] SUS_AMOUNTS = { 10, 250, 500, 1000 };
+
+	private void validateFluidAmounts() {
+		for (FluidIngredient ingredient : params.fluidIngredients) {
+			for (long amount : SUS_AMOUNTS) {
+				if (ingredient.getRequiredAmount() == amount) {
+					Create.LOGGER.warn("Suspicious fluid amount in recipe [{}]: {}", params.id, amount);
+				}
+			}
+		}
 	}
 
 	// Datagen shortcuts

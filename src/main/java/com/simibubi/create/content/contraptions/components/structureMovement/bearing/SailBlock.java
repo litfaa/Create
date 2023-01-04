@@ -23,6 +23,8 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -92,6 +94,7 @@ public class SailBlock extends WrenchableDirectionalBlock implements BlockPickIn
 
 		if (heldItem.getItem() instanceof ShearsItem) {
 			if (!world.isClientSide)
+				world.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0f, 1.0f);
 				applyDye(state, world, pos, ray.getLocation(), null);
 			return InteractionResult.SUCCESS;
 		}
@@ -103,6 +106,7 @@ public class SailBlock extends WrenchableDirectionalBlock implements BlockPickIn
 
 		if (color != null) {
 			if (!world.isClientSide)
+				world.playSound(null, pos, SoundEvents.DYE_USE, SoundSource.BLOCKS, 1.0f, 1.1f - world.random.nextFloat() * .2f);
 				applyDye(state, world, pos, ray.getLocation(), color);
 			return InteractionResult.SUCCESS;
 		}

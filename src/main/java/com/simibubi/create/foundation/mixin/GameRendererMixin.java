@@ -15,11 +15,9 @@ import net.fabricmc.api.Environment;
 @Environment(EnvType.CLIENT)
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
-	
 	@Inject(at = @At("TAIL"), method = "pick")
 	private void bigShapePick(CallbackInfo ci) {
 		BigOutlines.pick();
 		TrackBlockOutline.pickCurves();
 	}
-
 }

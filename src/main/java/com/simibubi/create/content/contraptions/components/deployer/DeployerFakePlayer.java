@@ -4,30 +4,21 @@ import java.util.Collection;
 import java.util.OptionalInt;
 import java.util.UUID;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.mojang.authlib.GameProfile;
-import com.simibubi.create.Create;
 import com.simibubi.create.foundation.config.AllConfigs;
 import com.simibubi.create.foundation.config.CKinetics;
 import com.simibubi.create.foundation.utility.Lang;
 
-import dev.cafeteria.fakeplayerapi.server.FakePlayerBuilder;
-import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
+import io.github.fabricators_of_create.porting_lib.fake_players.FakePlayer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.Connection;
-import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.EntityDamageSource;
@@ -43,20 +34,20 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-public class DeployerFakePlayer extends FakeServerPlayer {
+public class DeployerFakePlayer extends FakePlayer {
 
 	private static final Connection NETWORK_MANAGER = new Connection(PacketFlow.CLIENTBOUND);
 	public static final GameProfile DEPLOYER_PROFILE =
 		new GameProfile(UUID.fromString("9e2faded-cafe-4ec2-c314-dad129ae971d"), "Deployer");
-	public static final FakePlayerBuilder BUILDER = new FakePlayerBuilder(Create.asResource("deployer"));
 	Pair<BlockPos, Float> blockBreakingProgress;
 	ItemStack spawnedItemEffects;
 	public boolean placedTracks;
 	public boolean onMinecartContraption;
 
 	public DeployerFakePlayer(ServerLevel world) {
-		super(BUILDER, world.getServer(), world, DEPLOYER_PROFILE);
-		connection = new FakePlayNetHandler(world.getServer(), this);
+		super(world, DEPLOYER_PROFILE);
+		// fabric: use the default FakePacketListener
+//		connection = new FakePlayNetHandler(world.getServer(), this);
 	}
 
 	public void setSpawnedItemEffects(ItemStack spawnedItemEffects) {
@@ -164,16 +155,16 @@ public class DeployerFakePlayer extends FakeServerPlayer {
 		}
 	}
 
-	private static class FakePlayNetHandler extends ServerGamePacketListenerImpl {
-		public FakePlayNetHandler(MinecraftServer server, ServerPlayer playerIn) {
-			super(server, NETWORK_MANAGER, playerIn);
-		}
-
-		@Override
-		public void send(Packet<?> packetIn) {}
-
-		@Override
-		public void send(Packet<?> p_243227_, @Nullable PacketSendListener p_243273_) {}
-	}
+//	private static class FakePlayNetHandler extends ServerGamePacketListenerImpl {
+//		public FakePlayNetHandler(MinecraftServer server, ServerPlayer playerIn) {
+//			super(server, NETWORK_MANAGER, playerIn);
+//		}
+//
+//		@Override
+//		public void send(Packet<?> packetIn) {}
+//
+//		@Override
+//		public void send(Packet<?> p_243227_, @Nullable PacketSendListener p_243273_) {}
+//	}
 
 }

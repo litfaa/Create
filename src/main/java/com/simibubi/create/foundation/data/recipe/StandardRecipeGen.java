@@ -261,7 +261,7 @@ public class StandardRecipeGen extends CreateRecipeProvider {
 		MECHANICAL_PRESS = create(AllBlocks.MECHANICAL_PRESS).unlockedBy(I::andesiteCasing)
 			.viaShaped(b -> b.define('C', I.andesiteCasing())
 				.define('S', I.shaft())
-				.define('I', AllTags.forgeItemTag("storage_blocks/iron"))
+				.define('I', AllTags.forgeItemTag("iron_blocks"))
 				.pattern("S")
 				.pattern("C")
 				.pattern("I")),
@@ -1068,7 +1068,7 @@ public class StandardRecipeGen extends CreateRecipeProvider {
 		CRUSHED_NICKEL = blastModdedCrushedMetal(AllItems.CRUSHED_NICKEL, NICKEL),
 
 		ZINC_ORE = create(AllItems.ZINC_INGOT::get).withSuffix("_from_ore")
-			.viaCookingTag(() -> AllTags.forgeItemTag("ores/zinc"))
+			.viaCookingTag(() -> AllTags.forgeItemTag("zinc_ores"))
 			.rewardXP(1)
 			.inBlastFurnace(),
 

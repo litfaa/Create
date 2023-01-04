@@ -1,8 +1,10 @@
 package com.simibubi.create.content.contraptions.relays.belt;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
 
@@ -24,7 +26,7 @@ import com.simibubi.create.content.schematics.ISpecialBlockItemRequirement;
 import com.simibubi.create.content.schematics.ItemRequirement;
 import com.simibubi.create.content.schematics.ItemRequirement.ItemUseType;
 import com.simibubi.create.foundation.block.ITE;
-import com.simibubi.create.foundation.block.render.DestroyProgressRenderingHandler;
+import com.simibubi.create.foundation.block.render.MultiPosDestructionHandler;
 import com.simibubi.create.foundation.block.render.ReducedDestroyEffects;
 import com.simibubi.create.foundation.tileEntity.behaviour.belt.TransportedItemStackHandlerBehaviour.TransportedResult;
 import com.simibubi.create.foundation.utility.Iterate;
@@ -40,7 +42,6 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -86,7 +87,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class BeltBlock extends HorizontalKineticBlock implements ITE<BeltTileEntity>, ISpecialBlockItemRequirement, ITransformableBlock,
-		BlockPickInteractionAware, DestroyProgressRenderingHandler, ReducedDestroyEffects {
+		BlockPickInteractionAware, ReducedDestroyEffects, MultiPosDestructionHandler {
 
 	public static final Property<BeltSlope> SLOPE = EnumProperty.create("slope", BeltSlope.class);
 	public static final Property<BeltPart> PART = EnumProperty.create("part", BeltPart.class);
@@ -454,6 +455,8 @@ public class BeltBlock extends HorizontalKineticBlock implements ITE<BeltTileEnt
 
 	@Override
 	public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
+		super.onRemove(state, world, pos, newState, isMoving);
+		
 		if (world.isClientSide)
 			return;
 		if (state.getBlock() == newState.getBlock())
@@ -461,21 +464,11 @@ public class BeltBlock extends HorizontalKineticBlock implements ITE<BeltTileEnt
 		if (isMoving)
 			return;
 
-		BlockEntity te = world.getBlockEntity(pos);
-		if (te instanceof BeltTileEntity) {
-			BeltTileEntity beltTileEntity = (BeltTileEntity) te;
-			if (beltTileEntity.isController())
-				beltTileEntity.getInventory()
-					.ejectAll();
-			world.removeBlockEntity(pos);
-		}
-
 		// Destroy chain
 		for (boolean forward : Iterate.trueAndFalse) {
 			BlockPos currentPos = nextSegmentPosition(state, pos, forward);
 			if (currentPos == null)
 				continue;
-			world.destroyBlockProgress(currentPos.hashCode(), currentPos, -1);
 			BlockState currentState = world.getBlockState(currentPos);
 			if (!AllBlocks.BELT.has(currentState))
 				continue;
@@ -695,17 +688,16 @@ public class BeltBlock extends HorizontalKineticBlock implements ITE<BeltTileEnt
 		return false;
 	}
 
-	@Environment(EnvType.CLIENT)
-	@Override
-	public boolean renderDestroyProgress(ClientLevel level, LevelRenderer renderer, int breakerId, BlockPos pos,
-			int progress, BlockState blockState) {
-		BlockEntity blockEntity = level.getBlockEntity(pos);
-		if (blockEntity instanceof BeltTileEntity belt) {
-			for (BlockPos beltPos : BeltBlock.getBeltChain(level, belt.getController())) {
-				renderer.destroyBlockProgress(beltPos.hashCode(), beltPos, progress);
+//	public static class RenderProperties extends ReducedDestroyEffects implements MultiPosDestructionHandler {
+		@Override
+		@Environment(EnvType.CLIENT)
+		public Set<BlockPos> getExtraPositions(ClientLevel level, BlockPos pos, BlockState blockState, int progress) {
+			BlockEntity blockEntity = level.getBlockEntity(pos);
+			if (blockEntity instanceof BeltTileEntity belt) {
+				return new HashSet<>(BeltBlock.getBeltChain(level, belt.getController()));
 			}
+			return null;
 		}
-		return false;
-	}
+//	}
 
 }

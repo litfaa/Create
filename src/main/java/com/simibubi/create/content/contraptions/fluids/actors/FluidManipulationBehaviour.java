@@ -1,22 +1,27 @@
 package com.simibubi.create.content.contraptions.fluids.actors;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
+import javax.annotation.Nullable;
+
 import com.simibubi.create.AllTags.AllFluidTags;
 import com.simibubi.create.foundation.config.AllConfigs;
 import com.simibubi.create.foundation.fluid.FluidHelper;
+import com.simibubi.create.foundation.mixin.fabric.SortedArraySetAccessor;
 import com.simibubi.create.foundation.networking.AllPackets;
 import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
 import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
 import com.simibubi.create.foundation.utility.Iterate;
+import com.simibubi.create.foundation.utility.NBTHelper;
 import com.simibubi.create.foundation.utility.VecHelper;
-import io.github.fabricators_of_create.porting_lib.util.FluidStack;
 
+import io.github.fabricators_of_create.porting_lib.util.FluidStack;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -29,24 +34,20 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.SortedArraySet;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nullable;
-
 public abstract class FluidManipulationBehaviour extends TileEntityBehaviour {
 
-	protected static class BlockPosEntry {
-		public BlockPos pos;
-		public int distance;
+	public static record BlockPosEntry(BlockPos pos, int distance) {
+	};
 
-		public BlockPosEntry(BlockPos pos, int distance) {
-			this.pos = pos;
-			this.distance = distance;
-		}
+	public static class ChunkNotLoadedException extends Exception {
+		private static final long serialVersionUID = 1L;
 	}
 
 	BoundingBox affectedArea;
@@ -55,7 +56,7 @@ public abstract class FluidManipulationBehaviour extends TileEntityBehaviour {
 	protected boolean counterpartActed;
 
 	// Search
-	static final int searchedPerTick = 256;
+	static final int searchedPerTick = 1024;
 	static final int validationTimerMin = 160;
 	List<BlockPosEntry> frontier;
 	Set<BlockPos> visited;
@@ -143,14 +144,22 @@ public abstract class FluidManipulationBehaviour extends TileEntityBehaviour {
 		int compareDistance = Integer.compare(e2.distance, e1.distance);
 		if (compareDistance != 0)
 			return compareDistance;
-		return Double.compare(VecHelper.getCenterOf(pos2)
-			.distanceToSqr(centerOfRoot),
-			VecHelper.getCenterOf(pos1)
-				.distanceToSqr(centerOfRoot));
+		int distanceCompared = Double.compare(VecHelper.getCenterOf(pos2)
+						.distanceToSqr(centerOfRoot),
+				VecHelper.getCenterOf(pos1)
+						.distanceToSqr(centerOfRoot));
+		// fabric: since we're using a set for the queue, we need to only have them equal if they're really equal.
+		if (distanceCompared != 0)
+			return distanceCompared;
+		// equidistant, go by X and Z
+		int xCompared = Integer.compare(pos2.getX(), pos1.getX());
+		if (xCompared != 0)
+			return xCompared;
+		return Integer.compare(pos2.getZ(), pos1.getZ());
 	}
 
 	protected Fluid search(Fluid fluid, List<BlockPosEntry> frontier, Set<BlockPos> visited,
-		BiConsumer<BlockPos, Integer> add, boolean searchDownward) {
+		BiConsumer<BlockPos, Integer> add, boolean searchDownward) throws ChunkNotLoadedException {
 		Level world = getWorld();
 		int maxBlocks = maxBlocks();
 		int maxRange = canDrainInfinitely(fluid) ? maxRange() : maxRange() / 2;
@@ -164,6 +173,9 @@ public abstract class FluidManipulationBehaviour extends TileEntityBehaviour {
 			if (visited.contains(currentPos))
 				continue;
 			visited.add(currentPos);
+
+			if (!world.isLoaded(currentPos))
+				throw new ChunkNotLoadedException();
 
 			FluidState fluidState = world.getFluidState(currentPos);
 			if (fluidState.isEmpty())
@@ -182,6 +194,8 @@ public abstract class FluidManipulationBehaviour extends TileEntityBehaviour {
 					continue;
 
 				BlockPos offsetPos = currentPos.relative(side);
+				if (!world.isLoaded(offsetPos))
+					throw new ChunkNotLoadedException();
 				if (visited.contains(offsetPos))
 					continue;
 				if (offsetPos.distSqr(rootPos) > maxRangeSq)
@@ -225,6 +239,8 @@ public abstract class FluidManipulationBehaviour extends TileEntityBehaviour {
 
 	@Override
 	public void write(CompoundTag nbt, boolean clientPacket) {
+		if (infinite)
+			NBTHelper.putMarker(nbt, "Infinite");
 		if (rootPos != null)
 			nbt.put("LastPos", NbtUtils.writeBlockPos(rootPos));
 		if (affectedArea != null) {
@@ -238,6 +254,7 @@ public abstract class FluidManipulationBehaviour extends TileEntityBehaviour {
 
 	@Override
 	public void read(CompoundTag nbt, boolean clientPacket) {
+		infinite = nbt.contains("Infinite");
 		if (nbt.contains("LastPos"))
 			rootPos = NbtUtils.readBlockPos(nbt.getCompound("LastPos"));
 		if (nbt.contains("AffectedAreaFrom") && nbt.contains("AffectedAreaTo"))
@@ -246,22 +263,49 @@ public abstract class FluidManipulationBehaviour extends TileEntityBehaviour {
 		super.read(nbt, clientPacket);
 	}
 
-	// fabric: anonymous enums are cursed and apparently aren't enums!
 	public enum BottomlessFluidMode implements Predicate<Fluid> {
-		ALLOW_ALL,
-		DENY_ALL,
-		ALLOW_BY_TAG,
-		DENY_BY_TAG;
+		ALLOW_ALL(fluid -> true),
+		DENY_ALL(fluid -> false),
+		ALLOW_BY_TAG(fluid -> AllFluidTags.BOTTOMLESS_ALLOW.matches(fluid)),
+		DENY_BY_TAG(fluid -> !AllFluidTags.BOTTOMLESS_DENY.matches(fluid));
+
+		private final Predicate<Fluid> predicate;
+
+		BottomlessFluidMode(Predicate<Fluid> predicate) {
+			this.predicate = predicate;
+		}
 
 		@Override
 		public boolean test(Fluid fluid) {
-			return switch (this) {
-				case ALLOW_ALL -> true;
-				case DENY_ALL -> false;
-				case ALLOW_BY_TAG -> AllFluidTags.BOTTOMLESS_ALLOW.matches(fluid);
-				case DENY_BY_TAG -> !AllFluidTags.BOTTOMLESS_DENY.matches(fluid);
-			};
+			return predicate.test(fluid);
 		}
+	}
+
+
+	/**
+	 * Quickly copy the given set.
+	 * This is a shallow copy, so entries must be immutable.
+	 */
+	public static <T> SortedArraySet<T> copySet(SortedArraySet<T> set) {
+		int size = set.size();
+		SortedArraySetAccessor<T> access = (SortedArraySetAccessor<T>) set;
+		Comparator<T> comparator = access.create$getComparator();
+		T[] contents = access.create$getContents();
+		T[] copiedContents = (T[]) new Object[size];
+		System.arraycopy(contents, 0, copiedContents, 0, size);
+		SortedArraySet<T> copy = SortedArraySet.create(comparator, size);
+		SortedArraySetAccessor<T> copyAccess = ((SortedArraySetAccessor<T>) copy);
+		copyAccess.create$setContents(copiedContents);
+		copyAccess.create$setSize(size);
+		return copy;
+	}
+
+	/**
+	 * Remove the first entry from the given set.
+	 * identical to {@code set.remove(set.first())}
+	 */
+	public static <T> void dequeue(SortedArraySet<T> set) {
+		((SortedArraySetAccessor<T>) set).create$callRemoveInternal(0);
 	}
 
 }

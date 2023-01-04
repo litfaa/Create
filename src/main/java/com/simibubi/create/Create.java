@@ -1,12 +1,12 @@
 package com.simibubi.create;
 
-import com.simibubi.create.foundation.utility.recipe.AllIngredients;
+import java.util.Random;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.logging.LogUtils;
 import com.simibubi.create.api.behaviour.BlockSpoutingBehaviour;
 import com.simibubi.create.compat.Mods;
 import com.simibubi.create.compat.trinkets.Trinkets;
@@ -29,25 +29,26 @@ import com.simibubi.create.foundation.block.CopperRegistries;
 import com.simibubi.create.foundation.command.ServerLagger;
 import com.simibubi.create.foundation.config.AllConfigs;
 import com.simibubi.create.foundation.config.ContraptionMovementSetting;
+import com.simibubi.create.foundation.data.AllLangPartials;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.LangMerger;
+import com.simibubi.create.foundation.data.TagGen;
 import com.simibubi.create.foundation.data.recipe.MechanicalCraftingRecipeGen;
 import com.simibubi.create.foundation.data.recipe.ProcessingRecipeGen;
 import com.simibubi.create.foundation.data.recipe.SequencedAssemblyRecipeGen;
 import com.simibubi.create.foundation.data.recipe.StandardRecipeGen;
 import com.simibubi.create.foundation.networking.AllPackets;
 import com.simibubi.create.foundation.utility.CreateRegistry;
+import com.simibubi.create.foundation.utility.recipe.AllIngredients;
 import com.simibubi.create.foundation.worldgen.AllFeatures;
 import com.simibubi.create.foundation.worldgen.AllOreFeatureConfigEntries;
 import com.simibubi.create.foundation.worldgen.AllPlacementModifiers;
 import com.simibubi.create.foundation.worldgen.BuiltinRegistration;
-import com.tterrag.registrate.util.nullness.NonNullSupplier;
 
 import io.github.tropheusj.milk.Milk;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.Level;
@@ -57,13 +58,19 @@ public class Create implements ModInitializer {
 
 	public static final String ID = "create";
 	public static final String NAME = "Create";
-	public static final String VERSION = "0.5f";
+	public static final String VERSION = "0.5g";
 
-	public static final Logger LOGGER = LogManager.getLogger();
+	public static final Logger LOGGER = LogUtils.getLogger();
 
 	public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
 		.disableHtmlEscaping()
 		.create();
+
+	/** Use the {@link Random} of a local {@link Level} or {@link Entity} or create one */
+	@Deprecated
+	public static final Random RANDOM = new Random();
+
+	public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(ID);
 
 	public static final CreativeModeTab BASE_CREATIVE_TAB = new CreateItemGroup();
 	public static final CreativeModeTab PALETTES_CREATIVE_TAB = new PalettesItemGroup();
@@ -73,19 +80,14 @@ public class Create implements ModInitializer {
 	public static final TorquePropagator TORQUE_PROPAGATOR = new TorquePropagator();
 	public static final GlobalRailwayManager RAILWAYS = new GlobalRailwayManager();
 	public static final ServerLagger LAGGER = new ServerLagger();
-	/** Use the {@link RandomSource} of a local {@link Level} or {@link Entity} or create one using {@link RandomSource#create()} */
-	@Deprecated
-	public static final RandomSource RANDOM = RandomSource.create();
-
-	private static final NonNullSupplier<CreateRegistrate> REGISTRATE = CreateRegistrate.lazy(ID);
 
 	@Override
 	public void onInitialize() { // onCtor
 		AllSoundEvents.prepare();
+		AllTags.init();
 		AllBlocks.register();
 		AllItems.register();
 		AllFluids.register();
-		AllTags.register();
 		AllPaletteBlocks.register();
 		AllContainerTypes.register();
 		AllEntityTypes.register();
@@ -95,7 +97,7 @@ public class Create implements ModInitializer {
 		AllIngredients.register();
 
 		// fabric exclusive, squeeze this in here to register before stuff is used
-		REGISTRATE.get().register();
+		REGISTRATE.register();
 
 		AllParticleTypes.register();
 		AllStructureProcessorTypes.register();
@@ -144,7 +146,8 @@ public class Create implements ModInitializer {
 	}
 
 	public static void gatherData(FabricDataGenerator gen, ExistingFileHelper helper) {
-		gen.addProvider(new LangMerger(gen));
+		TagGen.datagen();
+		gen.addProvider(new LangMerger(gen, ID, "Create", AllLangPartials.values()));
 		gen.addProvider(AllSoundEvents.provider(gen));
 		gen.addProvider(new AllAdvancements(gen));
 		gen.addProvider(new StandardRecipeGen(gen));
@@ -152,10 +155,6 @@ public class Create implements ModInitializer {
 		gen.addProvider(new SequencedAssemblyRecipeGen(gen));
 		ProcessingRecipeGen.registerAll(gen);
 //		AllOreFeatureConfigEntries.gatherData(gen);
-	}
-
-	public static CreateRegistrate registrate() {
-		return REGISTRATE.get();
 	}
 
 	public static ResourceLocation asResource(String path) {

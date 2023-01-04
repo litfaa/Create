@@ -196,39 +196,7 @@ public abstract class CreateRecipeCategory<T extends Recipe<?>> implements Displ
 		outputs.forEach(f -> amounts.add(f.getAmount()));
 
 		fluidStacks.stream().filter(widget -> widget instanceof Slot slot && slot.getCurrentEntry().getType() == VanillaEntryTypes.FLUID).forEach(widget -> {
-			Slot slot = (Slot) widget;
-			ClientEntryStacks.setTooltipProcessor(slot.getCurrentEntry(), (entryStack, tooltip) -> {
-				dev.architectury.fluid.FluidStack fluidStack = entryStack.castValue();
-				FluidStack fluid = new FluidStack(fluidStack.getFluid(), fluidStack.getAmount(), fluidStack.getTag());
-				if (fluid.getFluid()
-						.isSame(AllFluids.POTION.get())) {
-					Component name = fluid.getDisplayName();
-					if (tooltip.entries().isEmpty())
-						tooltip.entries().add(0, Tooltip.entry(name));
-					else
-						tooltip.entries().set(0, Tooltip.entry(name));
-
-					ArrayList<Component> potionTooltip = new ArrayList<>();
-					PotionFluidHandler.addPotionTooltip(fluid, potionTooltip, 1);
-					ArrayList<Tooltip.Entry> potionEntries = new ArrayList<>();
-					potionTooltip.forEach(component -> potionEntries.add(Tooltip.entry(component)));
-					// why 2 here??? it works though
-					tooltip.entries().addAll(2, potionEntries.stream().toList());
-				}
-
-				FluidUnit unit = AllConfigs.CLIENT.fluidUnitType.get();
-				String amount = FluidTextUtil.getUnicodeMillibuckets(amounts.get(0), unit, AllConfigs.CLIENT.simplifyFluidUnit.get());
-				Component text = Component.literal(String.valueOf(amount)).append(Lang.translateDirect(unit.getTranslationKey())).withStyle(ChatFormatting.GOLD);
-				if (tooltip.entries().isEmpty())
-					tooltip.entries().add(0, Tooltip.entry(text));
-				else {
-					List<Component> siblings = tooltip.entries().get(0).getAsText().getSiblings();
-					siblings.add(Component.literal(" "));
-					siblings.add(text);
-				}
-				tooltip.entries().remove(1); // Remove REI added amount
-				return tooltip;
-			});
+			setFluidTooltip((Slot) widget);
 		});
 	}
 
@@ -236,6 +204,7 @@ public abstract class CreateRecipeCategory<T extends Recipe<?>> implements Displ
 		ClientEntryStacks.setTooltipProcessor(slot.getCurrentEntry(), (entryStack, tooltip) -> {
 			dev.architectury.fluid.FluidStack fluidStack = entryStack.castValue();
 			FluidStack fluid = new FluidStack(fluidStack.getFluid(), fluidStack.getAmount(), fluidStack.getTag());
+			tooltip.entries().remove(1); // Remove REI added amount
 			if (fluid.getFluid()
 					.isSame(AllFluids.POTION.get())) {
 				Component name = fluid.getDisplayName();
@@ -253,7 +222,7 @@ public abstract class CreateRecipeCategory<T extends Recipe<?>> implements Displ
 
 			FluidUnit unit = AllConfigs.CLIENT.fluidUnitType.get();
 			String amount = FluidTextUtil.getUnicodeMillibuckets(fluid.getAmount(), unit, AllConfigs.CLIENT.simplifyFluidUnit.get());
-			Component text = Component.literal(String.valueOf(amount)).append(Lang.translateDirect("generic.unit.millibuckets")).withStyle(ChatFormatting.GOLD);
+			Component text = Component.literal(String.valueOf(amount)).append(Lang.translateDirect(unit.getTranslationKey())).withStyle(ChatFormatting.GOLD);
 			if (tooltip.entries().isEmpty())
 				tooltip.entries().add(0, Tooltip.entry(text));
 			else {
@@ -261,7 +230,6 @@ public abstract class CreateRecipeCategory<T extends Recipe<?>> implements Displ
 				siblings.add(Component.literal(" "));
 				siblings.add(text);
 			}
-			tooltip.entries().remove(1); // Remove REI added amount
 			return tooltip;
 		});
 	}

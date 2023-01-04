@@ -35,10 +35,8 @@ import com.simibubi.create.foundation.utility.Iterate;
 import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.NBTHelper;
 
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
-import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SidedStorageBlockEntity;
@@ -55,7 +53,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -83,7 +81,6 @@ public class BrassTunnelTileEntity extends BeltTunnelTileEntity implements IHave
 	private Set<BrassTunnelTileEntity> syncSet;
 
 	protected ScrollOptionBehaviour<SelectionMode> selectionMode;
-	private BlockApiCache<Storage<ItemVariant>, Direction> beltCapabilityCache;
 	private BrassTunnelItemHandler tunnelCapability;
 
 	public final SnapshotParticipant<Data> snapshotParticipant = new SnapshotParticipant<>() {
@@ -114,12 +111,6 @@ public class BrassTunnelTileEntity extends BeltTunnelTileEntity implements IHave
 		tunnelCapability = new BrassTunnelItemHandler(this);
 		previousOutputIndex = 0;
 		syncedOutputActive = false;
-	}
-
-	@Override
-	public void setLevel(Level level) {
-		super.setLevel(level);
-		beltCapabilityCache = TransferUtil.getItemCache(level, worldPosition.below());
 	}
 
 	@Override
@@ -744,8 +735,15 @@ public class BrassTunnelTileEntity extends BeltTunnelTileEntity implements IHave
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
+	}
+
+	@Override
+	public void destroy() {
+		super.destroy();
+		Block.popResource(level, worldPosition, stackToDistribute);
+		stackEnteredFrom = null;
 	}
 
 	@Override
@@ -754,7 +752,7 @@ public class BrassTunnelTileEntity extends BeltTunnelTileEntity implements IHave
 	}
 
 	public Storage<ItemVariant> getBeltCapability() {
-		return beltCapabilityCache != null ? beltCapabilityCache.find(Direction.UP) : null;
+		return storageBelow != null ? storageBelow.get(Direction.UP) : null;
 	}
 
 	public enum SelectionMode implements INamedIconOptions {

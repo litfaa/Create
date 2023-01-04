@@ -8,10 +8,10 @@
       "tag": "c:leather"
     },
     "S": {
-      "tag": "c:plates/gold"
+      "tag": "c:gold_plates"
     },
     "W": {
-      "tag": "c:chests/wooden"
+      "tag": "c:wooden_chests"
     }
   },
   "pattern": [

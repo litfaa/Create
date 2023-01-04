@@ -18,6 +18,7 @@ import com.simibubi.create.content.contraptions.components.structureMovement.Con
 import com.simibubi.create.content.contraptions.components.structureMovement.MovementContext;
 import com.simibubi.create.content.contraptions.components.structureMovement.OrientedContraptionEntity;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
+import com.simibubi.create.foundation.config.AllConfigs;
 import com.simibubi.create.foundation.config.ContraptionMovementSetting;
 import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.NBTHelper;
@@ -201,6 +202,8 @@ public class MinecartContraptionItem extends Item {
 
 	public static InteractionResult wrenchCanBeUsedToPickUpMinecartContraptions(Player player, Level world, InteractionHand hand, Entity entity, @Nullable EntityHitResult hitResult) {
 		if (player == null || entity == null)
+			return InteractionResult.PASS;
+		if (!AllConfigs.SERVER.kinetics.survivalContraptionPickup.get() && !player.isCreative())
 			return InteractionResult.PASS;
 
 		if (player.isSpectator()) // forge checks this, fabric does not

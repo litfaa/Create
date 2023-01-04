@@ -2,15 +2,15 @@
   "type": "create:crushing",
   "fabric:load_conditions": [
     {
-      "condition": "fabric:item_tags_populated",
+      "condition": "fabric:tags_populated",
       "values": [
-        "c:ores/quicksilver"
+        "c:quicksilver_ores"
       ]
     }
   ],
   "ingredients": [
     {
-      "tag": "c:ores/quicksilver"
+      "tag": "c:quicksilver_ores"
     }
   ],
   "processingTime": 400,

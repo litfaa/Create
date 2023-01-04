@@ -14,6 +14,7 @@ import com.simibubi.create.content.contraptions.itemAssembly.SequencedAssemblyRe
 
 import io.github.fabricators_of_create.porting_lib.mixin.common.accessor.TagValueAccessor;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluids;
@@ -56,7 +57,7 @@ public class SequencedAssemblyRecipeGen extends CreateRecipeProvider {
 			.transitionTo(AllItems.INCOMPLETE_REINFORCED_SHEET.get())
 			.addOutput(AllItems.STURDY_SHEET.get(), 1)
 			.loops(1)
-			.addStep(FillingRecipe::new, rb -> rb.require(Fluids.LAVA, 40500))
+			.addStep(FillingRecipe::new, rb -> rb.require(Fluids.LAVA, FluidConstants.BUCKET / 2))
 			.addStep(PressingRecipe::new, rb -> rb)
 			.addStep(PressingRecipe::new, rb -> rb)),
 

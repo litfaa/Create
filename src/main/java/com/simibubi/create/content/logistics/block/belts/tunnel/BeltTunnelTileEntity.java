@@ -11,7 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import com.jozufozu.flywheel.backend.instancing.InstancedRenderDispatcher;
-import com.simibubi.create.content.contraptions.relays.belt.BeltTileEntity;
+import com.simibubi.create.content.contraptions.relays.belt.transport.ItemHandlerBeltSegment;
 import com.simibubi.create.content.logistics.block.belts.tunnel.BeltTunnelBlock.Shape;
 import com.simibubi.create.content.logistics.block.funnel.BeltFunnelBlock;
 import com.simibubi.create.content.logistics.packet.TunnelFlapPacket;
@@ -23,9 +23,8 @@ import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat.Chaser;
 import com.tterrag.registrate.fabric.EnvExecutor;
 
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import io.github.fabricators_of_create.porting_lib.util.StorageProvider;
 import net.fabricmc.api.EnvType;
-import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SidedStorageBlockEntity;
@@ -48,7 +47,7 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements SidedStorag
 	public Map<Direction, LerpedFloat> flaps;
 	public Set<Direction> sides;
 
-	protected BlockApiCache<Storage<ItemVariant>, Direction> belowStorageCache;
+	protected StorageProvider<ItemVariant> storageBelow;
 	protected List<Pair<Direction, Boolean>> flapsToSend;
 
 	public BeltTunnelTileEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -61,12 +60,16 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements SidedStorag
 	@Override
 	public void setLevel(Level level) {
 		super.setLevel(level);
-		belowStorageCache = TransferUtil.getItemCache(level, worldPosition.below());
+		storageBelow = StorageProvider.createForItems(level, worldPosition.below()).filter(this::isBeltStorage);
+	}
+
+	public boolean isBeltStorage(StorageProvider<ItemVariant> provider, Storage<ItemVariant> storage) {
+		return storage instanceof ItemHandlerBeltSegment;
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	protected void writeFlapsAndSides(CompoundTag compound) {
@@ -198,8 +201,8 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements SidedStorag
 
 	@Override
 	public Storage<ItemVariant> getItemStorage(@Nullable Direction face) {
-		if (belowStorageCache != null && belowStorageCache.getBlockEntity() instanceof BeltTileEntity) {
-			return belowStorageCache.find(Direction.UP);
+		if (storageBelow != null) {
+			return storageBelow.get(Direction.UP);
 		}
 		return null;
 	}

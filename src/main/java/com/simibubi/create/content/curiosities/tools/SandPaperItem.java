@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.google.common.collect.BiMap;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.foundation.item.CustomUseEffectsItem;
 import com.simibubi.create.foundation.mixin.accessor.LivingEntityAccessor;
@@ -13,8 +12,6 @@ import com.simibubi.create.foundation.utility.VecHelper;
 
 import io.github.fabricators_of_create.porting_lib.mixin.common.accessor.AxeItemAccessor;
 import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
-
-import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
 import io.github.fabricators_of_create.porting_lib.util.ToolAction;
 import io.github.fabricators_of_create.porting_lib.util.ToolActions;
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -38,7 +35,6 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.WeatheringCopper;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -140,7 +136,7 @@ public class SandPaperItem extends Item implements CustomUseEffectsItem {
 			}
 
 			if (!polished.isEmpty()) {
-				if (player instanceof FakeServerPlayer) {
+				if (player.isFake()) {
 					player.drop(polished, false, false);
 				} else {
 					player.getInventory()

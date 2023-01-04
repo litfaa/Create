@@ -3,13 +3,13 @@
   "acceptMirrored": true,
   "key": {
     "B": {
-      "tag": "c:ingots/brass"
+      "tag": "c:brass_ingots"
     },
     "E": {
       "tag": "c:ender_pearls"
     },
     "G": {
-      "tag": "c:glass"
+      "tag": "c:glass_blocks"
     },
     "O": {
       "tag": "c:obsidian"

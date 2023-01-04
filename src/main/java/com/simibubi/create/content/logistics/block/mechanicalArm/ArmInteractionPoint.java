@@ -2,21 +2,17 @@ package com.simibubi.create.content.logistics.block.mechanicalArm;
 
 import javax.annotation.Nullable;
 
-import com.simibubi.create.foundation.item.ItemHelper;
-
-import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-
 import com.simibubi.create.content.contraptions.components.structureMovement.StructureTransform;
+import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.utility.NBTHelper;
 import com.simibubi.create.foundation.utility.VecHelper;
+
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
-
+import io.github.fabricators_of_create.porting_lib.util.StorageProvider;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -35,7 +31,7 @@ public class ArmInteractionPoint {
 	protected Mode mode = Mode.DEPOSIT;
 
 	protected BlockState cachedState;
-	protected BlockApiCache<Storage<ItemVariant>, Direction> cachedHandler = null;
+	protected StorageProvider<ItemVariant> provider = null;
 	protected ArmAngleTarget cachedAngles;
 
 	public ArmInteractionPoint(ArmInteractionPointType type, Level level, BlockPos pos, BlockState state) {
@@ -98,10 +94,10 @@ public class ArmInteractionPoint {
 
 	@Nullable
 	protected Storage<ItemVariant> getHandler() {
-		if (cachedHandler == null) {
-			cachedHandler = TransferUtil.getItemCache(level, pos);
+		if (provider == null) {
+			provider = StorageProvider.createForItems(level, pos);
 		}
-		return cachedHandler.find(Direction.UP);
+		return provider.get(Direction.UP);
 	}
 
 	public ItemStack insert(ItemStack stack, TransactionContext ctx) {

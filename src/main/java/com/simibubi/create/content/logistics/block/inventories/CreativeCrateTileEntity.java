@@ -35,8 +35,8 @@ public class CreativeCrateTileEntity extends CrateTileEntity implements SidedSto
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	@Nullable

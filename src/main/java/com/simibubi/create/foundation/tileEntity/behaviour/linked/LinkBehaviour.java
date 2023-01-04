@@ -24,6 +24,7 @@ import com.simibubi.create.foundation.utility.Couple;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -123,8 +124,8 @@ public class LinkBehaviour extends TileEntityBehaviour implements IRedstoneLinka
 	}
 
 	@Override
-	public void remove() {
-		super.remove();
+	public void unload() {
+		super.unload();
 		if (getWorld().isClientSide)
 			return;
 		getHandler().removeFromNetwork(getWorld(), this);
@@ -221,7 +222,15 @@ public class LinkBehaviour extends TileEntityBehaviour implements IRedstoneLinka
 
 	@Override
 	public boolean isAlive() {
-		return !tileEntity.isRemoved() && getWorld().getBlockEntity(getPos()) == tileEntity;
+		Level level = getWorld();
+		BlockPos pos = getPos();
+		if (tileEntity.isChunkUnloaded())
+			return false;
+		if (tileEntity.isRemoved())
+			return false;
+		if (!level.isLoaded(pos))
+			return false;
+		return level.getBlockEntity(pos) == tileEntity;
 	}
 
 	public boolean canInteract(Player player) {

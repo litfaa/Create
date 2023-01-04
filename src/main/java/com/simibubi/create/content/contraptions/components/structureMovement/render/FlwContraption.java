@@ -121,8 +121,9 @@ public class FlwContraption extends ContraptionRenderInfo {
 	}
 
 	public void invalidate() {
-		for (ArrayModelRenderer buffer : renderLayers.values()) {
-			buffer.delete();
+		for (ArrayModelRenderer renderer : renderLayers.values()) {
+			renderer.delete();
+			renderer.getModel().delete();
 		}
 		renderLayers.clear();
 

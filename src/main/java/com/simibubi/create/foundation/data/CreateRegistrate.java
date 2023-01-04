@@ -1,6 +1,6 @@
 package com.simibubi.create.foundation.data;
 
-import static com.simibubi.create.AllTags.pickaxeOnly;
+import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 
 import java.util.Collection;
 import java.util.IdentityHashMap;
@@ -53,11 +53,15 @@ import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
 import net.minecraft.world.level.material.Fluid;
 
 public class CreateRegistrate extends AbstractRegistrate<CreateRegistrate> {
-
 	protected CreateRegistrate(String modid) {
 		super(modid);
 	}
 
+	public static CreateRegistrate create(String modid) {
+		return new CreateRegistrate(modid);
+	}
+
+	@Deprecated(forRemoval = true)
 	public static NonNullSupplier<CreateRegistrate> lazy(String modid) {
 		return NonNullSupplier
 			.lazy(() -> new CreateRegistrate(modid));
@@ -65,16 +69,16 @@ public class CreateRegistrate extends AbstractRegistrate<CreateRegistrate> {
 
 	/* Section Tracking */
 
-	private static Map<RegistryEntry<?>, AllSections> sectionLookup = new IdentityHashMap<>();
-	private AllSections section;
+	protected static final Map<RegistryEntry<?>, AllSections> SECTION_LOOKUP = new IdentityHashMap<>();
+	protected AllSections currentSection;
 
 	public CreateRegistrate startSection(AllSections section) {
-		this.section = section;
+		this.currentSection = section;
 		return this;
 	}
 
 	public AllSections currentSection() {
-		return section;
+		return currentSection;
 	}
 
 	@Override
@@ -82,26 +86,25 @@ public class CreateRegistrate extends AbstractRegistrate<CreateRegistrate> {
 		ResourceKey<? extends Registry<R>> type, Builder<R, T, ?, ?> builder, NonNullSupplier<? extends T> creator,
 		NonNullFunction<RegistryObject<T>, ? extends RegistryEntry<T>> entryFactory) {
 		RegistryEntry<T> ret = super.accept(name, type, builder, creator, entryFactory);
-		sectionLookup.put(ret, currentSection());
+		SECTION_LOOKUP.put(ret, currentSection());
 		return ret;
 	}
 
 	public void addToSection(RegistryEntry<?> entry, AllSections section) {
-		sectionLookup.put(entry, section);
+		SECTION_LOOKUP.put(entry, section);
 	}
 
 	public AllSections getSection(RegistryEntry<?> entry) {
-		return sectionLookup.getOrDefault(entry, AllSections.UNASSIGNED);
+		return SECTION_LOOKUP.getOrDefault(entry, AllSections.UNASSIGNED);
 	}
 
 	public AllSections getSection(Object entry) {
-		return sectionLookup.entrySet()
-			.stream()
-			.filter(e -> e.getKey()
-				.get() == entry)
-			.map(Entry::getValue)
-			.findFirst()
-			.orElse(AllSections.UNASSIGNED);
+		for (Entry<RegistryEntry<?>, AllSections> mapEntry : SECTION_LOOKUP.entrySet()) {
+			if (mapEntry.getKey().get() == entry) {
+				return mapEntry.getValue();
+			}
+		}
+		return AllSections.UNASSIGNED;
 	}
 
 	public <R> Collection<RegistryEntry<R>> getAll(AllSections section,

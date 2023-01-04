@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "key": {
     "G": {
-      "tag": "c:glass"
+      "tag": "c:glass_blocks"
     },
     "P": {
       "item": "minecraft:copper_ingot"

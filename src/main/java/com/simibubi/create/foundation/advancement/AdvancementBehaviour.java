@@ -8,7 +8,6 @@ import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
 import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
 import com.simibubi.create.foundation.tileEntity.behaviour.BehaviourType;
 
-import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -123,9 +122,7 @@ public class AdvancementBehaviour extends TileEntityBehaviour {
 		AdvancementBehaviour behaviour = TileEntityBehaviour.get(worldIn, pos, TYPE);
 		if (behaviour == null)
 			return;
-		if (placer instanceof FakeServerPlayer)
-			return;
-		if (placer instanceof ServerPlayer)
+		if (placer instanceof ServerPlayer player && !player.isFake())
 			behaviour.setPlayer(placer.getUUID());
 	}
 

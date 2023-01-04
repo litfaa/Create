@@ -1,5 +1,7 @@
 package com.simibubi.create.content.logistics.trains.management.schedule;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.simibubi.create.AllItems;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.contraptions.components.structureMovement.Contraption;
@@ -16,23 +18,25 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
 
 public class ScheduleItemEntityInteraction {
 
-	public static InteractionResult removeScheduleFromConductor(Player player, InteractionHand hand, Entity entity) {
+	public static InteractionResult interactWithConductor(Player player, Level world, InteractionHand hand, Entity entity, @Nullable EntityHitResult hitResult) {
 		if (player == null || entity == null)
-			return null;
+			return InteractionResult.PASS;
 		if (player.isSpectator())
-			return null;
+			return InteractionResult.PASS;
 
 		Entity rootVehicle = entity.getRootVehicle();
 		if (!(rootVehicle instanceof CarriageContraptionEntity))
-			return null;
+			return InteractionResult.PASS;
 		if (!(entity instanceof LivingEntity living))
-			return null;
+			return InteractionResult.PASS;
 		if (player.getCooldowns()
 			.isOnCooldown(AllItems.SCHEDULE.get()))
-			return null;
+			return InteractionResult.PASS;
 
 		ItemStack itemStack = player.getItemInHand(hand);
 		if (itemStack.getItem()instanceof ScheduleItem si) {
@@ -45,28 +49,28 @@ public class ScheduleItemEntityInteraction {
 		}
 
 		if (hand == InteractionHand.OFF_HAND)
-			return null;
+			return InteractionResult.PASS;
 
 		CarriageContraptionEntity cce = (CarriageContraptionEntity) rootVehicle;
 		Contraption contraption = cce.getContraption();
 		if (!(contraption instanceof CarriageContraption cc))
-			return null;
+			return InteractionResult.PASS;
 
 		Train train = cce.getCarriage().train;
 		if (train == null)
-			return null;
+			return InteractionResult.PASS;
 		if (train.runtime.getSchedule() == null)
-			return null;
+			return InteractionResult.PASS;
 
 		Integer seatIndex = contraption.getSeatMapping()
 			.get(entity.getUUID());
 		if (seatIndex == null)
-			return null;
+			return InteractionResult.PASS;
 		BlockPos seatPos = contraption.getSeats()
 			.get(seatIndex);
 		Couple<Boolean> directions = cc.conductorSeats.get(seatPos);
 		if (directions == null)
-			return null;
+			return InteractionResult.PASS;
 
 		boolean onServer = !player.level.isClientSide;
 

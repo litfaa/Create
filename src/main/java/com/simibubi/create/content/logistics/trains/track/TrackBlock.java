@@ -11,9 +11,13 @@ import static com.simibubi.create.AllShapes.TRACK_ORTHO_LONG;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
+import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Predicates;
 import com.jozufozu.flywheel.core.PartialModel;
@@ -39,7 +43,7 @@ import com.simibubi.create.content.schematics.ItemRequirement;
 import com.simibubi.create.content.schematics.ItemRequirement.ItemUseType;
 import com.simibubi.create.foundation.block.ITE;
 import com.simibubi.create.foundation.block.ProperWaterloggedBlock;
-import com.simibubi.create.foundation.block.render.DestroyProgressRenderingHandler;
+import com.simibubi.create.foundation.block.render.MultiPosDestructionHandler;
 import com.simibubi.create.foundation.block.render.ReducedDestroyEffects;
 import com.simibubi.create.foundation.utility.AngleHelper;
 import com.simibubi.create.foundation.utility.BlockFace;
@@ -54,7 +58,6 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.registry.LandPathNodeTypesRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -102,7 +105,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.ticks.LevelTickAccess;
 
-public class TrackBlock extends Block implements ITE<TrackTileEntity>, IWrenchable, ITrackBlock, ISpecialBlockItemRequirement, ProperWaterloggedBlock, DestroyProgressRenderingHandler, ReducedDestroyEffects {
+public class TrackBlock extends Block implements ITE<TrackTileEntity>, IWrenchable, ITrackBlock, ISpecialBlockItemRequirement, ProperWaterloggedBlock, ReducedDestroyEffects, MultiPosDestructionHandler {
 
 	public static final EnumProperty<TrackShape> SHAPE = EnumProperty.create("shape", TrackShape.class);
 	public static final BooleanProperty HAS_TE = BooleanProperty.create("turn");
@@ -761,14 +764,18 @@ public class TrackBlock extends Block implements ITE<TrackTileEntity>, IWrenchab
 		return new ItemRequirement(ItemUseType.CONSUME, stacks);
 	}
 
-	@Override
-	public boolean renderDestroyProgress(ClientLevel level, LevelRenderer renderer, int breakerId, BlockPos pos,
-		int progress, BlockState blockState) {
-		BlockEntity blockEntity = level.getBlockEntity(pos);
-		if (blockEntity instanceof TrackTileEntity track)
-			for (BlockPos trackPos : track.connections.keySet())
-				renderer.destroyBlockProgress(pos.hashCode(), trackPos, progress);
-		return false;
-	}
+//	public static class RenderProperties extends ReducedDestroyEffects implements MultiPosDestructionHandler {
+		@Override
+		@Nullable
+		@Environment(EnvType.CLIENT)
+		public Set<BlockPos> getExtraPositions(ClientLevel level, BlockPos pos, BlockState blockState,
+											   int progress) {
+			BlockEntity blockEntity = level.getBlockEntity(pos);
+			if (blockEntity instanceof TrackTileEntity track) {
+				return new HashSet<>(track.connections.keySet());
+			}
+			return null;
+		}
+//	}
 
 }

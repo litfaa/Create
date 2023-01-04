@@ -1,5 +1,7 @@
 package com.simibubi.create.content.logistics.block.vault;
 
+import java.util.function.Consumer;
+
 import javax.annotation.Nullable;
 
 import com.simibubi.create.AllBlocks;
@@ -8,9 +10,10 @@ import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.contraptions.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.ITE;
 import com.simibubi.create.foundation.item.ItemHelper;
+
 import io.github.fabricators_of_create.porting_lib.block.CustomSoundTypeBlock;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -74,7 +77,11 @@ public class ItemVaultBlock extends Block implements IWrenchable, ITE<ItemVaultT
 			return;
 		if (pIsMoving)
 			return;
-		withTileEntityDo(pLevel, pPos, ItemVaultTileEntity::updateConnectivity);
+		// fabric: see comment in FluidTankItem
+		Consumer<ItemVaultTileEntity> consumer = ItemVaultItem.IS_PLACING_NBT
+				? ItemVaultTileEntity::queueConnectivityUpdate
+				: ItemVaultTileEntity::updateConnectivity;
+		withTileEntityDo(pLevel, pPos, consumer);
 	}
 
 	@Override
@@ -160,7 +167,8 @@ public class ItemVaultBlock extends Block implements IWrenchable, ITE<ItemVaultT
 	@Override
 	public int getAnalogOutputSignal(BlockState pState, Level pLevel, BlockPos pPos) {
 		return getTileEntityOptional(pLevel, pPos)
-			.map(vte -> TransferUtil.getItemStorage(vte))
+			.filter(vte -> !Transaction.isOpen()) // fabric: hack fix for comparators updating when they shouldn't
+			.map(TransferUtil::getItemStorage)
 			.map(ItemHelper::calcRedstoneFromInventory)
 			.orElse(0);
 	}

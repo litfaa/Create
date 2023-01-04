@@ -12,7 +12,6 @@ import com.simibubi.create.foundation.tileEntity.behaviour.inventory.TankManipul
 
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -22,8 +21,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -105,9 +104,13 @@ public class StockpileSwitchTileEntity extends SmartTileEntity {
 
 		BlockPos target = worldPosition.relative(getBlockState().getOptionalValue(StockpileSwitchBlock.FACING)
 			.orElse(Direction.NORTH));
+		BlockEntity targetTile = level.getBlockEntity(target);
 
-		if (level.getBlockEntity(target) instanceof StockpileSwitchObservable observable) {
+		if (targetTile instanceof StockpileSwitchObservable observable) {
 			currentLevel = observable.getPercent() / 100f;
+
+//		} else if (StorageDrawers.isDrawer(targetTile) && observedInventory.hasInventory()) {
+//			currentLevel = StorageDrawers.getTrueFillLevel(observedInventory.getInventory(), filtering);
 
 		} else if (observedInventory.hasInventory() || observedTank.hasInventory()) {
 			if (observedInventory.hasInventory()) {
@@ -115,7 +118,7 @@ public class StockpileSwitchTileEntity extends SmartTileEntity {
 				try (Transaction t = TransferUtil.getTransaction()) {
 					Storage<ItemVariant> inv = observedInventory.getInventory();
 					for (StorageView<ItemVariant> view : inv) {
-						long space = Math.min(view.getCapacity(), view.getResource().getItem().getMaxStackSize());
+						long space = view.getCapacity();
 						long count = view.getAmount();
 						if (space == 0)
 							continue;
@@ -145,6 +148,13 @@ public class StockpileSwitchTileEntity extends SmartTileEntity {
 			}
 
 			currentLevel = occupied / totalSpace;
+
+			// fabric: since fluid amounts are 81x larger, we lose floating point precision. Let's just round a little.
+			if (currentLevel > 0.999) {
+				currentLevel = 1;
+			} else if (currentLevel < 0.001) {
+				currentLevel = 0;
+			}
 
 		} else {
 			// No compatible inventories found

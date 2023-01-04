@@ -275,6 +275,11 @@ public class ItemVaultTileEntity extends SmartTileEntity implements IMultiTileCo
 	@Override
 	public void preventConnectivityUpdate() { updateConnectivity = false; }
 
+	// fabric: see comment in FluidTankItem
+	public void queueConnectivityUpdate() {
+		updateConnectivity = true;
+	}
+
 	@Override
 	public void notifyMultiUpdated() {
 		BlockState state = this.getBlockState();

@@ -151,6 +151,8 @@ public class HosePulleyTileEntity extends KineticTileEntity implements SidedStor
 
 	@Override
 	protected void write(CompoundTag compound, boolean clientPacket) {
+		if (clientPacket)
+			offset.forceNextSync();
 		compound.put("Offset", offset.writeNBT());
 		compound.put("Tank", internalTank.writeToNBT(new CompoundTag()));
 		super.write(compound, clientPacket);
@@ -168,8 +170,8 @@ public class HosePulleyTileEntity extends KineticTileEntity implements SidedStor
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	public float getMovementSpeed() {

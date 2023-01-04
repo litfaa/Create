@@ -35,7 +35,7 @@ import io.github.fabricators_of_create.porting_lib.block.CustomRenderBoundingBox
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.util.ItemStackUtil;
 import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
-import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
+import io.github.fabricators_of_create.porting_lib.util.StorageProvider;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SidedStorageBlockEntity;
@@ -85,8 +85,8 @@ public class ChuteTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 	int airCurrentUpdateCooldown;
 	int entitySearchCooldown;
 
-	BlockApiCache<Storage<ItemVariant>, Direction> capAbove;
-	BlockApiCache<Storage<ItemVariant>, Direction> capBelow;
+	StorageProvider<ItemVariant> capAbove;
+	StorageProvider<ItemVariant> capBelow;
 
 	public ChuteTileEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
 		super(type, pos, state);
@@ -103,8 +103,8 @@ public class ChuteTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 	@Override
 	public void setLevel(Level level) {
 		super.setLevel(level);
-		capAbove = TransferUtil.getItemCache(level, worldPosition.above());
-		capBelow = TransferUtil.getItemCache(level, worldPosition.below());
+		capAbove = StorageProvider.createForItems(level, worldPosition.above());
+		capBelow = StorageProvider.createForItems(level, worldPosition.below());
 	}
 
 	@Override
@@ -500,13 +500,13 @@ public class ChuteTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 	private Storage<ItemVariant> grabCapability(Direction side) {
 		if (level == null)
 			return null;
-		BlockApiCache<Storage<ItemVariant>, Direction> cache = side == Direction.UP ? capAbove : capBelow;
-		BlockEntity te = cache.getBlockEntity();
+		StorageProvider<ItemVariant> provider = side == Direction.UP ? capAbove : capBelow;
+		BlockEntity te = level.getBlockEntity(provider.pos);
 		if (te instanceof ChuteTileEntity) {
 			if (side != Direction.DOWN || !(te instanceof SmartChuteTileEntity) || getItemMotion() > 0)
 				return null;
 		}
-		return cache.find(side.getOpposite());
+		return provider.get(side.getOpposite());
 	}
 
 	public void setItem(ItemStack stack) {
@@ -524,8 +524,8 @@ public class ChuteTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	@Override
@@ -542,6 +542,7 @@ public class ChuteTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 	protected void read(CompoundTag compound, boolean clientPacket) {
 		ItemStack previousItem = item;
 		item = ItemStack.of(compound.getCompound("Item"));
+		itemHandler.update();
 		itemPosition.startWithValue(compound.getFloat("ItemPosition"));
 		pull = compound.getFloat("Pull");
 		push = compound.getFloat("Push");
@@ -570,8 +571,10 @@ public class ChuteTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 		return (Mth.clamp(motion, -maxItemSpeed, maxItemSpeed) + (motion <= 0 ? -gravity : 0)) / 20f;
 	}
 
-	public void onRemoved(BlockState chuteState) {
-		ChuteTileEntity targetChute = getTargetChute(chuteState);
+	@Override
+	public void destroy() {
+		super.destroy();
+		ChuteTileEntity targetChute = getTargetChute(getBlockState());
 		List<ChuteTileEntity> inputChutes = getInputChutes();
 		if (!item.isEmpty() && level != null)
 			Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), item);

@@ -494,8 +494,8 @@ public class FluidTankTileEntity extends SmartTileEntity implements IHaveGoggleI
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	@Override
@@ -534,6 +534,11 @@ public class FluidTankTileEntity extends SmartTileEntity implements IHaveGoggleI
 	@Override
 	public void preventConnectivityUpdate() {
 		updateConnectivity = false;
+	}
+
+	// fabric: see comment in FluidTankItem
+	public void queueConnectivityUpdate() {
+		updateConnectivity = true;
 	}
 
 	@Override

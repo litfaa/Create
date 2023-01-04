@@ -2,15 +2,15 @@
   "type": "create:crushing",
   "fabric:load_conditions": [
     {
-      "condition": "fabric:item_tags_populated",
+      "condition": "fabric:tags_populated",
       "values": [
-        "c:ores/silver"
+        "c:silver_ores"
       ]
     }
   ],
   "ingredients": [
     {
-      "tag": "c:ores/silver"
+      "tag": "c:silver_ores"
     }
   ],
   "processingTime": 400,

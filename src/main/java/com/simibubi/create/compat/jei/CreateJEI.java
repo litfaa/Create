@@ -85,6 +85,7 @@ import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.runtime.IIngredientManager;
+import mezz.jei.fabric.ingredients.fluid.JeiFluidIngredient;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -339,6 +340,17 @@ public class CreateJEI implements IModPlugin {
 		allCategories.forEach(c -> c.registerRecipes(registration));
 
 		registration.addRecipes(RecipeTypes.CRAFTING, ToolboxColoringRecipeMaker.createRecipes().toList());
+
+		// fabric: hide virtual fluids from JEI
+		registration.getIngredientManager().removeIngredientsAtRuntime(
+				FabricTypes.FLUID_STACK,
+				List.of(
+						new JeiFluidIngredient(AllFluids.POTION.get().getSource(), 1),
+						new JeiFluidIngredient(AllFluids.POTION.get().getFlowing(), 1),
+						new JeiFluidIngredient(AllFluids.TEA.get().getSource(), 1),
+						new JeiFluidIngredient(AllFluids.TEA.get().getFlowing(), 1)
+				)
+		);
 	}
 
 	@Override

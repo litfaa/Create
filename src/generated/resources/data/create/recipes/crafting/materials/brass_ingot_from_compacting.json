@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "key": {
     "#": {
-      "tag": "c:nuggets/brass"
+      "tag": "c:brass_nuggets"
     }
   },
   "pattern": [

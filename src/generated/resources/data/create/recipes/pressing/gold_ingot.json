@@ -2,7 +2,7 @@
   "type": "create:pressing",
   "ingredients": [
     {
-      "tag": "c:ingots/gold"
+      "tag": "c:gold_ingots"
     }
   ],
   "results": [

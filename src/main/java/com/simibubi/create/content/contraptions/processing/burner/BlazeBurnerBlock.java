@@ -15,7 +15,6 @@ import com.simibubi.create.foundation.block.ITE;
 import com.simibubi.create.foundation.tileEntity.behaviour.filtering.FilteringBehaviour;
 import com.simibubi.create.foundation.utility.Lang;
 
-import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
 import net.fabricmc.api.EnvType;
@@ -28,7 +27,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -154,7 +152,7 @@ public class BlazeBurnerBlock extends HorizontalDirectionalBlock implements ITE<
 		}
 
 		boolean doNotConsume = player.isCreative();
-		boolean forceOverflow = !(player instanceof FakeServerPlayer);
+		boolean forceOverflow = !(player.isFake());
 		try (Transaction t = TransferUtil.getTransaction()) {
 			InteractionResultHolder<ItemStack> res =
 					tryInsert(state, world, pos, heldItem, doNotConsume, forceOverflow, t);
@@ -191,7 +189,7 @@ public class BlazeBurnerBlock extends HorizontalDirectionalBlock implements ITE<
 			return InteractionResultHolder.fail(ItemStack.EMPTY);
 
 		if (!doNotConsume) {
-			ItemStack container = stack.getItem().hasCraftingRemainingItem() ? new ItemStack(stack.getItem().getCraftingRemainingItem()) : ItemStack.EMPTY;
+			ItemStack container = stack.getRecipeRemainder();
 			if (!world.isClientSide) {
 				stack.shrink(1);
 			}
@@ -261,8 +259,12 @@ public class BlazeBurnerBlock extends HorizontalDirectionalBlock implements ITE<
 	}
 
 	public static int getLight(BlockState state) {
-		return Mth.clamp(state.getValue(HEAT_LEVEL)
-			.ordinal() * 4 - 1, 0, 15);
+		HeatLevel level = state.getValue(HEAT_LEVEL);
+		return switch (level) {
+		case NONE -> 0;
+		case SMOULDERING -> 8;
+		default -> 15;
+		};
 	}
 
 	public static LootTable.Builder buildLootTable() {

@@ -13,7 +13,6 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class ItemCountDisplaySource extends NumericSingleLineDisplaySource {
@@ -38,7 +37,8 @@ public class ItemCountDisplaySource extends NumericSingleLineDisplaySource {
 					continue;
 				if (!filteringBehaviour.test(view.getResource().toStack()))
 					continue;
-				collected += view.getAmount();
+				// extract to avoid counting multiple times
+				collected += view.extract(view.getResource(), view.getAmount(), t);
 			}
 		}
 

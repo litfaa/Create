@@ -91,7 +91,7 @@ public class ArmInteractionPointHandler {
 	}
 
 	public static void flushSettings(BlockPos pos) {
-		if (currentItem == null)
+		if (currentSelection == null)
 			return;
 
 		int removed = 0;
