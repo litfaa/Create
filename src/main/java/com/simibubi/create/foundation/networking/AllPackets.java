@@ -186,7 +186,7 @@ public enum AllPackets {
 	S_TRAIN_PROMPT(TrainPromptPacket.class, TrainPromptPacket::new, PLAY_TO_CLIENT),
 	CONTRAPTION_RELOCATION(ContraptionRelocationPacket.class, ContraptionRelocationPacket::new, PLAY_TO_CLIENT),
 	TRACK_GRAPH_ROLL_CALL(TrackGraphRollCallPacket.class, TrackGraphRollCallPacket::new, PLAY_TO_CLIENT),
-	TEST_EXPORT_S2C(TestExportCommandS2C.class, TestExportCommandS2C::new, PLAY_TO_CLIENT)
+	TEST_EXPORT_S2C(TestExportCommandS2C.class, TestExportCommandS2C::new, PLAY_TO_CLIENT),
 
 	// fabric: extra packet in place of custom entity data serializer
 	CARRIAGE_DATA_UPDATE(CarriageDataUpdatePacket.class, CarriageDataUpdatePacket::new, PLAY_TO_CLIENT),
