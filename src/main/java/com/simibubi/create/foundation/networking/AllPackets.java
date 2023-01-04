@@ -190,7 +190,7 @@ public enum AllPackets {
 		PLAY_TO_CLIENT),
 	S_PLACE_ARM(EjectorPlacementPacket.ClientBoundRequest.class, EjectorPlacementPacket.ClientBoundRequest::new,
 		PLAY_TO_CLIENT),
-	TEST_EXPORT_S2C(TestExportCommandS2C.class, TestExportCommandS2C::new, PLAY_TO_CLIENT)
+	TEST_EXPORT_S2C(TestExportCommandS2C.class, TestExportCommandS2C::new, PLAY_TO_CLIENT),
 
 	// fabric: extra packet in place of custom entity data serializer
 	CARRIAGE_DATA_UPDATE(CarriageDataUpdatePacket.class, CarriageDataUpdatePacket::new, PLAY_TO_CLIENT),

@@ -137,7 +137,7 @@ public class CreateTestCommand {
 			send(player, Components.literal("Successfully exported '" + info.name + "' to: " + exported));
 		} catch (IOException e) {
 			send(player, ERROR_SAVING);
-			Create.LOGGER.throwing(e);
+			Create.LOGGER.warn("Error saving structure", e);
 		}
 	}
 
