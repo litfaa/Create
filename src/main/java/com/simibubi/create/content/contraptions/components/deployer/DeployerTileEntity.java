@@ -454,9 +454,19 @@ public class DeployerTileEntity extends KineticTileEntity implements ItemTransfe
 		return super.createRenderBoundingBox().inflate(3);
 	}
 
+	public void discardPlayer() {
+		if (player == null)
+			return;
+		player.getInventory()
+			.dropAll();
+		overflowItems.forEach(itemstack -> player.drop(itemstack, true, false));
+		player.discard();
+		player = null;
+	}
+
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	public void changeMode() {

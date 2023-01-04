@@ -31,7 +31,7 @@ public class DeployerApplicationRecipe extends ItemApplicationRecipe implements 
 
 	@Override
 	protected int getMaxOutputCount() {
-		return 2;
+		return 4;
 	}
 
 	public static DeployerApplicationRecipe convert(Recipe<?> sandpaperRecipe) {

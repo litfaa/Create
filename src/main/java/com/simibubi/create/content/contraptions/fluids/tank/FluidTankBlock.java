@@ -1,5 +1,7 @@
 package com.simibubi.create.content.contraptions.fluids.tank;
 
+import java.util.function.Consumer;
+
 import com.simibubi.create.AllTileEntities;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.contraptions.fluids.actors.GenericItemFilling;
@@ -12,11 +14,10 @@ import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.fluid.FluidHelper.FluidExchange;
 import com.simibubi.create.foundation.tileEntity.ComparatorUtil;
 import com.simibubi.create.foundation.utility.Lang;
+
 import io.github.fabricators_of_create.porting_lib.block.CustomSoundTypeBlock;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-
-import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -27,7 +28,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
@@ -105,7 +105,11 @@ public class FluidTankBlock extends Block implements IWrenchable, ITE<FluidTankT
 			return;
 		if (moved)
 			return;
-		withTileEntityDo(world, pos, FluidTankTileEntity::updateConnectivity);
+		// fabric: see comment in FluidTankItem
+		Consumer<FluidTankTileEntity> consumer = FluidTankItem.IS_PLACING_NBT
+				? FluidTankTileEntity::queueConnectivityUpdate
+				: FluidTankTileEntity::updateConnectivity;
+		withTileEntityDo(world, pos, consumer);
 	}
 
 	@Override

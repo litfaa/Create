@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.base.Strings;
-import com.simibubi.create.AllEntityDataSerializers;
 import com.simibubi.create.AllEntityTypes;
 import com.simibubi.create.Create;
 import com.simibubi.create.CreateClient;
@@ -32,6 +31,8 @@ import com.simibubi.create.foundation.utility.Couple;
 import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.VecHelper;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -50,13 +51,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo;
 import net.minecraft.world.phys.Vec3;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 
 public class CarriageContraptionEntity extends OrientedContraptionEntity {
 
-	private static final EntityDataAccessor<CarriageSyncData> CARRIAGE_DATA =
-		SynchedEntityData.defineId(CarriageContraptionEntity.class, AllEntityDataSerializers.CARRIAGE_DATA);
+	// fabric: cannot use custom entity data serializers
+//	private static final EntityDataAccessor<CarriageSyncData> CARRIAGE_DATA =
+//		SynchedEntityData.defineId(CarriageContraptionEntity.class, AllEntityDataSerializers.CARRIAGE_DATA);
 	private static final EntityDataAccessor<Optional<UUID>> TRACK_GRAPH =
 		SynchedEntityData.defineId(CarriageContraptionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 	private static final EntityDataAccessor<Boolean> SCHEDULED =
@@ -83,6 +83,9 @@ public class CarriageContraptionEntity extends OrientedContraptionEntity {
 	@Environment(EnvType.CLIENT)
 	public CarriageParticles particles;
 
+	// fabric: cannot use custom entity data serializers
+	public CarriageSyncData carriageData = new CarriageSyncData();
+
 	public CarriageContraptionEntity(EntityType<?> type, Level world) {
 		super(type, world);
 		validForRender = false;
@@ -98,7 +101,7 @@ public class CarriageContraptionEntity extends OrientedContraptionEntity {
 	@Override
 	protected void defineSynchedData() {
 		super.defineSynchedData();
-		entityData.define(CARRIAGE_DATA, new CarriageSyncData());
+//		entityData.define(CARRIAGE_DATA, new CarriageSyncData());
 		entityData.define(TRACK_GRAPH, Optional.empty());
 		entityData.define(SCHEDULED, false);
 	}
@@ -124,18 +127,22 @@ public class CarriageContraptionEntity extends OrientedContraptionEntity {
 		if (TRACK_GRAPH.equals(key))
 			updateTrackGraph();
 
-		if (CARRIAGE_DATA.equals(key)) {
-			CarriageSyncData carriageData = getCarriageData();
-			if (carriageData == null)
-				return;
-			if (carriage == null)
-				return;
-			carriageData.apply(this, carriage);
-		}
+		// fabric: carriage data update listening moved
+	}
+
+	public void onCarriageDataUpdate(CarriageSyncData newData) {
+		this.carriageData = newData;
+		if (carriage == null)
+			return;
+		carriageData.apply(this, carriage);
+	}
+
+	public void sendCarriageDataUpdate() {
+		AllPackets.channel.sendToClientsTracking(new CarriageDataUpdatePacket(this), this);
 	}
 
 	public CarriageSyncData getCarriageData() {
-		return entityData.get(CARRIAGE_DATA);
+		return carriageData;
 	}
 
 	public boolean hasSchedule() {
@@ -236,8 +243,7 @@ public class CarriageContraptionEntity extends OrientedContraptionEntity {
 			boolean shouldCarriageSyncThisTick =
 				carriage.train.shouldCarriageSyncThisTick(level.getGameTime(), getType().updateInterval());
 			if (shouldCarriageSyncThisTick && carriageData.isDirty()) {
-				entityData.set(CARRIAGE_DATA, null);
-				entityData.set(CARRIAGE_DATA, carriageData);
+				sendCarriageDataUpdate();
 				carriageData.setDirty(false);
 			}
 
@@ -446,7 +452,7 @@ public class CarriageContraptionEntity extends OrientedContraptionEntity {
 	@Override
 	public void onClientRemoval() {
 		super.onClientRemoval();
-		entityData.set(CARRIAGE_DATA, new CarriageSyncData());
+		carriageData = new CarriageSyncData();
 		if (carriage != null) {
 			DimensionalCarriageEntity dce = carriage.getDimensional(level);
 			dce.pointsInitialised = false;

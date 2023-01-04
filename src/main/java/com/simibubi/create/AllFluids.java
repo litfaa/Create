@@ -1,5 +1,6 @@
 package com.simibubi.create;
 
+import static com.simibubi.create.Create.REGISTRATE;
 import static net.minecraft.world.item.Items.BUCKET;
 import static net.minecraft.world.item.Items.GLASS_BOTTLE;
 import static net.minecraft.world.item.Items.HONEY_BOTTLE;
@@ -15,7 +16,6 @@ import com.simibubi.create.content.contraptions.fluids.potion.PotionFluid.Bottle
 import com.simibubi.create.content.contraptions.fluids.potion.PotionFluid.PotionFluidAttributes;
 import com.simibubi.create.content.contraptions.fluids.potion.PotionFluidHandler;
 import com.simibubi.create.content.palettes.AllPaletteStoneTypes;
-import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.utility.NBTHelper;
 import com.tterrag.registrate.fabric.EnvExecutor;
 import com.tterrag.registrate.fabric.SimpleFlowableFluid;
@@ -52,8 +52,6 @@ public class AllFluids {
 	// Fabric: since a honey block is 4 bottles, we can't use the default 1/3 (27000)
 	// we can't make a block take 108000, since then it can't fit in the basin
 	public static final long HONEY_BOTTLE_AMOUNT = FluidConstants.BLOCK / 4;
-
-	private static final CreateRegistrate REGISTRATE = Create.registrate();
 
 	public static final FluidEntry<PotionFluid> POTION =
 			REGISTRATE.virtualFluid("potion", PotionFluidAttributes::new, PotionFluid::new)

@@ -219,8 +219,8 @@ public class MechanicalCrafterTileEntity extends KineticTileEntity implements It
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	public int getCountDownSpeed() {
@@ -268,9 +268,9 @@ public class MechanicalCrafterTileEntity extends KineticTileEntity implements It
 					List<ItemStack> containers = new ArrayList<>();
 					groupedItems.grid.values()
 						.forEach(stack -> {
-							if (stack.getItem().hasCraftingRemainingItem())
-								containers.add(stack.getItem().getCraftingRemainingItem()
-									.getDefaultInstance());
+							ItemStack remaining = stack.getRecipeRemainder();
+							if (!remaining.isEmpty())
+								containers.add(remaining);
 						});
 
 					if (isVirtual())

@@ -4,23 +4,30 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.jetbrains.annotations.Nullable;
+
+import com.simibubi.create.AllEnchantments;
 import com.simibubi.create.AllEntityTypes;
 import com.simibubi.create.Create;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.curiosities.armor.BackTankUtil;
 import com.simibubi.create.content.curiosities.zapper.ShootableGadgetItemMethods;
 import com.simibubi.create.foundation.config.AllConfigs;
+import com.simibubi.create.foundation.item.CustomArmPoseItem;
 import com.simibubi.create.foundation.utility.AnimationTickHolder;
 import com.simibubi.create.foundation.utility.Components;
 import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.VecHelper;
+
+import io.github.fabricators_of_create.porting_lib.enchant.CustomEnchantingBehaviorItem;
 import io.github.fabricators_of_create.porting_lib.item.EntitySwingListenerItem;
 import io.github.fabricators_of_create.porting_lib.item.ReequipAnimationItem;
-
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.HumanoidModel.ArmPose;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.Axis;
@@ -37,13 +44,14 @@ import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-public class PotatoCannonItem extends ProjectileWeaponItem implements EntitySwingListenerItem, ReequipAnimationItem {
+public class PotatoCannonItem extends ProjectileWeaponItem implements CustomArmPoseItem, EntitySwingListenerItem, ReequipAnimationItem, CustomEnchantingBehaviorItem {
 
 	public static ItemStack CLIENT_CURRENT_AMMO = ItemStack.EMPTY;
 	public static final int MAX_DAMAGE = 100;
@@ -57,21 +65,20 @@ public class PotatoCannonItem extends ProjectileWeaponItem implements EntitySwin
 		return false;
 	}
 
-//	@Override
-//	public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
-//		if (enchantment == Enchantments.POWER_ARROWS)
-//			return true;
-//		if (enchantment == Enchantments.PUNCH_ARROWS)
-//			return true;
-//		if (enchantment == Enchantments.FLAMING_ARROWS)
-//			return true;
-//		if (enchantment == Enchantments.MOB_LOOTING)
-//			return true;
-//		if (enchantment == AllEnchantments.POTATO_RECOVERY.get())
-//			return true;
-//		return false;
-		//return super.canApplyAtEnchantingTable(stack, enchantment);
-//	}
+	@Override
+	public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
+		if (enchantment == Enchantments.POWER_ARROWS)
+			return true;
+		if (enchantment == Enchantments.PUNCH_ARROWS)
+			return true;
+		if (enchantment == Enchantments.FLAMING_ARROWS)
+			return true;
+		if (enchantment == Enchantments.MOB_LOOTING)
+			return true;
+		if (enchantment == AllEnchantments.POTATO_RECOVERY.get())
+			return true;
+		return CustomEnchantingBehaviorItem.super.canApplyAtEnchantingTable(stack, enchantment);
+	}
 
 	@Override
 	public InteractionResult useOn(UseOnContext context) {
@@ -266,6 +273,15 @@ public class PotatoCannonItem extends ProjectileWeaponItem implements EntitySwin
 	@Override
 	public UseAnim getUseAnimation(ItemStack stack) {
 		return UseAnim.NONE;
+	}
+
+	@Override
+	@Nullable
+	public ArmPose getArmPose(ItemStack stack, AbstractClientPlayer player, InteractionHand hand) {
+		if (!player.swinging) {
+			return ArmPose.CROSSBOW_HOLD;
+		}
+		return null;
 	}
 
 	@Override

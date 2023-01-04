@@ -104,16 +104,6 @@ public class SawBlock extends DirectionalAxisKineticBlock implements ITE<SawTile
 	}
 
 	@Override
-	public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-		if (!state.hasBlockEntity() || state.getBlock() == newState.getBlock())
-			return;
-
-		withTileEntityDo(worldIn, pos, te -> ItemHelper.dropContents(worldIn, pos, te.inventory));
-		TileEntityBehaviour.destroy(worldIn, pos, FilteringBehaviour.TYPE);
-      		worldIn.removeBlockEntity(pos);
-	}
-
-	@Override
 	public Class<SawTileEntity> getTileEntityClass() {
 		return SawTileEntity.class;
 	}

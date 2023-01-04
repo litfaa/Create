@@ -7,22 +7,17 @@ import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
-
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-
 import org.apache.commons.lang3.mutable.MutableInt;
 
 import com.simibubi.create.foundation.config.AllConfigs;
 import com.simibubi.create.foundation.utility.Pair;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 
+import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.util.Mth;
@@ -181,14 +176,20 @@ public class ItemHelper {
 				for (StorageView<ItemVariant> view : inv.iterable(t)) {
 					if (view.isResourceBlank()) continue;
 					ItemVariant contained = view.getResource();
+					int maxStackSize = contained.getItem().getMaxStackSize();
 					// amount stored, amount needed, or max size, whichever is lowest.
-					int amountToExtractFromThisSlot = Math.min(truncateLong(view.getAmount()), Math.min(amount - extracted, contained.getItem().getMaxStackSize()));
+					int amountToExtractFromThisSlot = Math.min(truncateLong(view.getAmount()), Math.min(amount - extracted, maxStackSize));
 					if (!test.test(contained.toStack(amountToExtractFromThisSlot)))
 						continue;
 					if (extracting == null) {
 						extracting = contained; // we found a target
 					}
-					if (contained != extracting) {
+					boolean sameType = extracting.equals(contained);
+					if (sameType && maxStackSize == extracted) {
+						// stack is maxed out, skip
+						continue;
+					}
+					if (!sameType) {
 						// multiple types passed the test
 						if (otherTargets == null) {
 							otherTargets = new ArrayList<>();

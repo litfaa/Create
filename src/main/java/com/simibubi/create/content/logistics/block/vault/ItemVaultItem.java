@@ -1,7 +1,10 @@
 package com.simibubi.create.content.logistics.block.vault;
 
+import org.jetbrains.annotations.ApiStatus.Internal;
+
 import com.simibubi.create.AllTileEntities;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
+import com.simibubi.create.content.contraptions.fluids.tank.FluidTankItem;
 import com.simibubi.create.foundation.utility.VecHelper;
 
 import net.minecraft.core.BlockPos;
@@ -20,6 +23,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ItemVaultItem extends BlockItem {
+	// fabric: see comment in FluidTankItem
+	@Internal
+	public static boolean IS_PLACING_NBT = false;
 
 	public ItemVaultItem(Block p_i48527_1_, Properties p_i48527_2_) {
 		super(p_i48527_1_, p_i48527_2_);
@@ -27,7 +33,9 @@ public class ItemVaultItem extends BlockItem {
 
 	@Override
 	public InteractionResult place(BlockPlaceContext ctx) {
+		IS_PLACING_NBT = FluidTankItem.checkPlacingNbt(ctx);
 		InteractionResult initialResult = super.place(ctx);
+		IS_PLACING_NBT = false;
 		if (!initialResult.consumesAction())
 			return initialResult;
 		tryMultiPlace(ctx);
@@ -119,7 +127,9 @@ public class ItemVaultItem extends BlockItem {
 				BlockPlaceContext context = BlockPlaceContext.at(ctx, offsetPos, face);
 				player.getExtraCustomData()
 					.putBoolean("SilenceVaultSound", true);
+				IS_PLACING_NBT = FluidTankItem.checkPlacingNbt(context);
 				super.place(context);
+				IS_PLACING_NBT = false;
 				player.getExtraCustomData()
 					.remove("SilenceVaultSound");
 			}

@@ -99,7 +99,8 @@ public class BasinRecipe extends ProcessingRecipe<SmartInventory> {
 					ItemStack stack = var.toStack();
 					if (!ingredient.test(stack)) continue;
 					// Catalyst items are never consumed
-					if (stack.getItem().getCraftingRemainingItem() == stack.getItem())
+					ItemStack remainder = stack.getRecipeRemainder();
+					if (!remainder.isEmpty() && remainder.sameItem(stack))
 						continue Ingredients;
 					long extracted = view.extract(var, 1, t);
 					if (extracted == 0) continue;
@@ -146,7 +147,11 @@ public class BasinRecipe extends ProcessingRecipe<SmartInventory> {
 
 			// fabric: add remainders that were stored above
 			if (remainders != null) {
-				recipeOutputItems.addAll(remainders);
+				for (ItemStack remainder : remainders) {
+					if (!remainder.isEmpty()) {
+						recipeOutputItems.add(remainder);
+					}
+				}
 			}
 
 			if (!basin.acceptOutputs(recipeOutputItems, recipeOutputFluids, t))

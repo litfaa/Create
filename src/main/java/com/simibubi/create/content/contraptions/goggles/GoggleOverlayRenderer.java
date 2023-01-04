@@ -73,10 +73,7 @@ public class GoggleOverlayRenderer {
 		BlockEntity te = world.getBlockEntity(pos);
 
 		int prevHoverTicks = hoverTicks;
-		if (lastHovered == null || lastHovered.equals(pos))
-			hoverTicks++;
-		else
-			hoverTicks = 0;
+		hoverTicks++;
 		lastHovered = pos;
 
 		boolean wearingGoggles = GogglesItem.isWearingGoggles(mc.player);
@@ -118,8 +115,10 @@ public class GoggleOverlayRenderer {
 				hoverTicks = prevHoverTicks + 1;
 
 		// break early if goggle or hover returned false when present
-		if ((hasGoggleInformation && !goggleAddedInformation) && (hasHoveringInformation && !hoverAddedInformation))
+		if ((hasGoggleInformation && !goggleAddedInformation) && (hasHoveringInformation && !hoverAddedInformation)) {
+			hoverTicks = 0;
 			return;
+		}
 
 		// check for piston poles if goggles are worn
 		BlockState state = world.getBlockState(pos);
@@ -136,8 +135,10 @@ public class GoggleOverlayRenderer {
 					.getBlock() instanceof MechanicalPistonBlock;
 			}
 
-			if (!pistonFound)
+			if (!pistonFound) {
+				hoverTicks = 0;				
 				return;
+			}
 			if (!tooltip.isEmpty())
 				tooltip.add(Components.immutableEmpty());
 
@@ -146,8 +147,10 @@ public class GoggleOverlayRenderer {
 				.append(Components.literal(" " + poles)));
 		}
 
-		if (tooltip.isEmpty())
+		if (tooltip.isEmpty()) {
+			hoverTicks = 0;			
 			return;
+		}
 
 		poseStack.pushPose();
 
@@ -171,7 +174,7 @@ public class GoggleOverlayRenderer {
 		posX = Math.min(posX, mc.getWindow().getGuiScaledWidth() - tooltipTextWidth - 20);
 		posY = Math.min(posY, mc.getWindow().getGuiScaledHeight() - tooltipHeight - 20);
 
-		float fade = Mth.clamp((hoverTicks + partialTicks) / 12f, 0, 1);
+		float fade = Mth.clamp((hoverTicks + partialTicks) / 24f, 0, 1);
 		Boolean useCustom = cfg.overlayCustomColor.get();
 		Color colorBackground = useCustom ? new Color(cfg.overlayBackgroundColor.get())
 			: Theme.c(Theme.Key.VANILLA_TOOLTIP_BACKGROUND)
@@ -184,7 +187,7 @@ public class GoggleOverlayRenderer {
 				.copy();
 
 		if (fade < 1) {
-			poseStack.translate((1 - fade) * Math.signum(cfg.overlayOffsetX.get() + .5f) * 4, 0, 0);
+			poseStack.translate(Math.pow(1 - fade, 3) * Math.signum(cfg.overlayOffsetX.get() + .5f) * 8, 0, 0);
 			colorBackground.scaleAlpha(fade);
 			colorBorderTop.scaleAlpha(fade);
 			colorBorderBot.scaleAlpha(fade);

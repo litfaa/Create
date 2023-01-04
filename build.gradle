@@ -11,10 +11,10 @@ sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
 String buildNumber = System.getenv("GITHUB_RUN_NUMBER")
-version = mod_version + (buildNumber != null ? "-${buildNumber}" : "")
+version = mod_version + (buildNumber != null ? "-${buildNumber}" : "") + "+${project.minecraft_version}"
 
 group = project.maven_group
-archivesBaseName = "create-fabric-${project.minecraft_version}"
+archivesBaseName = "create-fabric"
 
 repositories {
     mavenCentral()
@@ -39,6 +39,9 @@ repositories {
     maven { url = "https://maven.gegy.dev" }
     maven { url = "https://dvs1.progwml6.com/files/maven/" }
     maven { url = "https://modmaven.dev" }
+    maven { url = "https://maven.gudenau.net" }
+    maven { url = "https://maven.blamejared.com/vazkii/botania/Botania/" }
+    maven { url = "https://maven.kyrptonaught.dev/" }
     maven {
         url = "https://maven.jamieswhiteshirt.com/libs-release"
         content {
@@ -62,7 +65,7 @@ dependencies {
 def dependencies(DependencyHandler deps) {
     deps.modImplementation("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}")
 
-    deps.modImplementation(deps.include("io.github.fabricators_of_create:Porting-Lib:${project.port_lib_version}+${project.minecraft_version}-dev.${project.port_lib_hash}"))
+    deps.modImplementation(deps.include("io.github.fabricators_of_create:Porting-Lib:${project.port_lib_version}+${project.minecraft_version}"))
     deps.modImplementation(deps.include("me.alphamode:ForgeTags:${project.forge_tags_version}"))
     deps.modImplementation(deps.include("com.electronwill.night-config:core:${project.night_config_core_version}"))
     deps.modImplementation(deps.include("com.electronwill.night-config:toml:${project.night_config_toml_version}"))
@@ -70,7 +73,6 @@ def dependencies(DependencyHandler deps) {
     deps.modImplementation(deps.include("com.tterrag.registrate_fabric:Registrate:${project.registrate_version}"))
     deps.modImplementation(deps.include("com.jozufozu.flywheel:flywheel-fabric-${flywheel_minecraft_version}:${project.flywheel_version}"))
     deps.modImplementation(deps.include("com.jamieswhiteshirt:reach-entity-attributes:${project.reach_entity_attributes_version}"))
-    deps.modImplementation(deps.include("dev.cafeteria:fake-player-api:${project.fake_player_api_version}"))
     deps.modImplementation(deps.include("io.github.tropheusj:milk-lib:${project.milk_lib_version}"))
     deps.modImplementation(deps.include("me.luligabi:NoIndium:${project.no_indium_version}"))
     deps.implementation(deps.include("com.google.code.findbugs:jsr305:${project.jsr305_version}"))
@@ -102,6 +104,7 @@ def compat(DependencyHandler deps) {
     deps.modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}")
     deps.modCompileOnly("maven.modrinth:sandwichable:1.2+1.18.2")
     deps.modImplementation("dev.emi:trinkets:${project.trinkets_version}") { exclude(group: "com.terraformersmc") }
+    deps.modCompileOnly("vazkii.botania:Botania:${project.botania_version}") { transitive = false }
 }
 
 // setup the three recipe viewer mods
@@ -136,32 +139,40 @@ def recipeViewers(DependencyHandler deps) {
 
 // mods that can be uncommented to test in development
 def testMods(DependencyHandler deps) {
-    modLocalRuntime("dev.monarkhes:myron:1.6.3+1.18.1") { transitive = false }
+//    deps.modLocalRuntime("dev.monarkhes:myron:1.6.3+1.18.1") { transitive = false }
 
-    deps.modLocalRuntime("maven.modrinth:kibe:1.9.7-BETA+1.18") { transitive = false }
-    deps.modLocalRuntime("io.github.ladysnake:PlayerAbilityLib:1.5.0") { transitive = false }
-    deps.modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.8.0+kotlin.1.7.0")
+//    deps.modLocalRuntime("maven.modrinth:kibe:1.9.7-BETA+1.18") { transitive = false }
+//    deps.modLocalRuntime("io.github.ladysnake:PlayerAbilityLib:1.5.0") { transitive = false }
+//    deps.modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.8.0+kotlin.1.7.0")
 
-    deps.modLocalRuntime("maven.modrinth:better-biome-blend:1.18.2-1.3.5-fabric")
+//    deps.modLocalRuntime("maven.modrinth:better-biome-blend:1.18.2-1.3.5-fabric")
 
-    deps.modLocalRuntime("maven.modrinth:sandwichable:1.2+1.18.2")
-    deps.modLocalRuntime("maven.modrinth:mealapi:0.3+1.18")
-    deps.modLocalRuntime("dev.lambdaurora:spruceui:3.3.1+1.17")
+//    deps.modLocalRuntime("maven.modrinth:sandwichable:1.2+1.18.2")
+//    deps.modLocalRuntime("maven.modrinth:mealapi:0.3+1.18")
+//    deps.modLocalRuntime("dev.lambdaurora:spruceui:3.3.1+1.17")
 
-    deps.modLocalRuntime("maven.modrinth:sodium:mc1.18.2-0.4.1")
-    deps.modLocalRuntime("org.joml:joml:1.10.4")
+//    deps.modLocalRuntime("maven.modrinth:sodium:mc1.18.2-0.4.1")
+//    deps.modLocalRuntime("org.joml:joml:1.10.4")
 
 //    deps.modLocalRuntime("maven.modrinth:phosphor:mc1.18.x-0.8.1")
 
-    deps.modLocalRuntime("maven.modrinth:starlight:1.0.2+1.18.2")
+//    deps.modLocalRuntime("maven.modrinth:starlight:1.0.2+1.18.2")
 
-    deps.modLocalRuntime("vazkii.botania:Botania:1.18.2-434-FABRIC")
+//    deps.modLocalRuntime("vazkii.botania:Botania:1.18.2-434-FABRIC")
 
-    deps.modLocalRuntime("curse.maven:nbt-crafting-314633:3707208") { transitive = false }
+//    deps.modLocalRuntime("curse.maven:nbt-crafting-314633:3707208") { transitive = false }
 
-    deps.modLocalRuntime("curse.maven:alloygery-573592:3847602") { transitive = false }
+//    deps.modLocalRuntime("curse.maven:alloygery-573592:3847602") { transitive = false }
 
-    deps.modLocalRuntime("curse.maven:xl-packets-fabric-390168:3527187") { transitive = false }
+//    deps.modLocalRuntime("curse.maven:xl-packets-fabric-390168:3527187") { transitive = false }
+
+//    deps.modLocalRuntime("maven.modrinth:paradise-lost:b1.6.8")
+//    deps.modLocalRuntime("net.gudenau.minecraft:RecipeConfidence:1.0.2")
+//    deps.modLocalRuntime("net.gudenau.minecraft:MoreTags:3.0.4")
+//    deps.modLocalRuntime("io.github.ladysnake:satin:1.7.2")
+//    deps.modLocalRuntime("net.kyrptonaught:customportalapi:0.0.1-beta50-1.18")
+//    deps.modLocalRuntime("com.github.devs-immortal:Incubus-Core:1.6.6-1.18.2") { transitive = false }
+//    deps.modLocalRuntime("com.github.CDAGaming.CrowdinTranslate:crowdin-translate:1.18.2")
 }
 
 machete {
@@ -201,10 +212,6 @@ loom {
             vmArg "-Dfabric-api.datagen"
             vmArg "-Dfabric-api.datagen.output-dir=${file("src/generated/resources")}"
             vmArg "-Dfabric-api.datagen.modid=create"
-            // from ae2
-            property "com.simibubi.create.existingData", file("src/main/resources").absolutePath
-
-            runDir "build/datagen"
         }
     }
 }
@@ -220,11 +227,10 @@ processResources {
     properties.put("java_version", sourceCompatibility)
     properties.put("registrate_version", project.registrate_version)
     properties.put("flywheel_version", project.flywheel_version)
-    properties.put("port_lib_version", "${project.port_lib_version}+${project.minecraft_version}.${project.port_lib_hash}")
+    properties.put("port_lib_version", "${project.port_lib_version}+${project.minecraft_version}")
     properties.put("forge_tags_version", project.forge_tags_version)
     properties.put("forge_config_api_port_version", project.forge_config_api_port_version)
     properties.put("reach_entity_attributes_version", project.reach_entity_attributes_version)
-    properties.put("fake_player_api_version", project.fake_player_api_version)
     properties.put("milk_lib_version", project.milk_lib_version)
     properties.put("night_config_core_version", project.night_config_core_version)
     properties.put("night_config_toml_version", project.night_config_toml_version)
@@ -259,7 +265,7 @@ jar {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId = archivesBaseName
+            artifactId = archivesBaseName + "-${project.minecraft_version}"
             from components.java
         }
     }

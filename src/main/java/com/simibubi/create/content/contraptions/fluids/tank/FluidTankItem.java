@@ -1,12 +1,12 @@
 package com.simibubi.create.content.contraptions.fluids.tank;
 
+import org.jetbrains.annotations.ApiStatus.Internal;
+
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllTileEntities;
-
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -21,6 +21,14 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class FluidTankItem extends BlockItem {
+	// fabric: (#690) because of ordering differences, we need to delay connection by a tick when placing multiblocks with NBT.
+	// If the item has NBT, it needs to be applied to a controller. However, ordering is different on fabric.
+	// on forge, the block is placed, the data is set, and the tanks connect.
+	// on fabric, the block is placed, the tanks connect, and the data is set.
+	// However, now that the tank is not a controller, nothing happens.
+	// solution: hacky static state storage. If we're placing NBT, delay connection until next tick.
+	@Internal
+	public static boolean IS_PLACING_NBT = false;
 
 	public FluidTankItem(Block p_i48527_1_, Properties p_i48527_2_) {
 		super(p_i48527_1_, p_i48527_2_);
@@ -28,7 +36,9 @@ public class FluidTankItem extends BlockItem {
 
 	@Override
 	public InteractionResult place(BlockPlaceContext ctx) {
+		IS_PLACING_NBT = FluidTankItem.checkPlacingNbt(ctx);
 		InteractionResult initialResult = super.place(ctx);
+		IS_PLACING_NBT = false;
 		if (!initialResult.consumesAction())
 			return initialResult;
 		tryMultiPlace(ctx);
@@ -125,11 +135,17 @@ public class FluidTankItem extends BlockItem {
 				BlockPlaceContext context = BlockPlaceContext.at(ctx, offsetPos, face);
 				player.getExtraCustomData()
 					.putBoolean("SilenceTankSound", true);
+				IS_PLACING_NBT = checkPlacingNbt(context);
 				super.place(context);
+				IS_PLACING_NBT = false;
 				player.getExtraCustomData()
 					.remove("SilenceTankSound");
 			}
 		}
 	}
 
+	public static boolean checkPlacingNbt(BlockPlaceContext ctx) {
+		ItemStack item = ctx.getItemInHand();
+		return BlockItem.getBlockEntityData(item) != null;
+	}
 }

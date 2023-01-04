@@ -37,8 +37,8 @@ public class CreativeCrateTileEntity extends CrateTileEntity implements ItemTran
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	@Nullable

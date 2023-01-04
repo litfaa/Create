@@ -7,27 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-import com.simibubi.create.foundation.item.ItemHelper;
-
-import io.github.fabricators_of_create.porting_lib.transfer.fluid.FluidTransferable;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemTransferable;
-import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
-
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
-
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-
-import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
-
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.ImmutableList;
@@ -40,6 +19,7 @@ import com.simibubi.create.content.contraptions.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.contraptions.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.content.contraptions.processing.burner.BlazeBurnerBlock.HeatLevel;
 import com.simibubi.create.foundation.fluid.CombinedTankWrapper;
+import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.item.SmartInventory;
 import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
 import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
@@ -51,17 +31,27 @@ import com.simibubi.create.foundation.tileEntity.behaviour.fluid.SmartFluidTankB
 import com.simibubi.create.foundation.tileEntity.behaviour.inventory.InvManipulationBehaviour;
 import com.simibubi.create.foundation.utility.AnimationTickHolder;
 import com.simibubi.create.foundation.utility.Couple;
-import com.simibubi.create.foundation.utility.LongAttached;
 import com.simibubi.create.foundation.utility.Iterate;
+import com.simibubi.create.foundation.utility.LongAttached;
 import com.simibubi.create.foundation.utility.NBTHelper;
 import com.simibubi.create.foundation.utility.VecHelper;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat.Chaser;
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
-import io.github.fabricators_of_create.porting_lib.util.LazyOptional;
-import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
 
+import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import io.github.fabricators_of_create.porting_lib.transfer.fluid.FluidTransferable;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemTransferable;
+import io.github.fabricators_of_create.porting_lib.util.FluidStack;
+import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -220,19 +210,27 @@ public class BasinTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 		visualizedOutputFluids.clear();
 	}
 
+	@Override
+	public void destroy() {
+		super.destroy();
+		ItemHelper.dropContents(level, worldPosition, inputInventory);
+		ItemHelper.dropContents(level, worldPosition, outputInventory);
+		spoutputBuffer.forEach(is -> Block.popResource(level, worldPosition, is));
+	}
+
+	@Override
+	public void remove() {
+		super.remove();
+		onEmptied();
+	}
+
 	public void onEmptied() {
 		getOperator().ifPresent(te -> te.basinRemoved = true);
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
-	}
-
-	@Override
-	protected void setRemovedNotDueToChunkUnload() {
-		onEmptied();
-		super.setRemovedNotDueToChunkUnload();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 //	@Nonnull
@@ -404,6 +402,9 @@ public class BasinTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 		try (Transaction t = TransferUtil.getTransaction()) {
 			for (Iterator<ItemStack> iterator = spoutputBuffer.iterator(); iterator.hasNext();) {
 				ItemStack itemStack = iterator.next();
+				// fabric: cleanup for #599
+				if (itemStack.isEmpty())
+					continue;
 
 				if (direction == Direction.DOWN) {
 					Block.popResource(level, worldPosition, itemStack);
@@ -559,7 +560,8 @@ public class BasinTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 			}
 
 			for (ItemStack itemStack : outputItems) {
-				if (itemStack.getItem().hasCraftingRemainingItem() && itemStack.is(itemStack.getItem().getCraftingRemainingItem()))
+				ItemStack remainder = itemStack.getRecipeRemainder();
+				if (!remainder.isEmpty() && itemStack.sameItem(remainder))
 					continue;
 				spoutputBuffer.add(itemStack.copy());
 			}
@@ -601,8 +603,9 @@ public class BasinTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 	private boolean acceptItemOutputsIntoBasin(List<ItemStack> outputItems, TransactionContext ctx, Storage<ItemVariant> targetInv) {
 		for (ItemStack itemStack : outputItems) {
 			// Catalyst items are never consumed
-			if (itemStack.getItem().hasCraftingRemainingItem() && itemStack.getItem().getCraftingRemainingItem()
-					.equals(itemStack.getItem()))
+			ItemStack remainder = itemStack.getRecipeRemainder();
+			if (!remainder.isEmpty() && remainder
+					.sameItem(itemStack))
 				continue;
 			long inserted = targetInv.insert(ItemVariant.of(itemStack), itemStack.getCount(), ctx);
 			if (inserted != itemStack.getCount())

@@ -108,6 +108,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ButtonBlock;
 import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.PressurePlateBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -748,10 +749,12 @@ public abstract class Contraption {
 
 		ListTag actorsNBT = new ListTag();
 		for (MutablePair<StructureBlockInfo, MovementContext> actor : getActors()) {
+			MovementBehaviour behaviour = AllMovementBehaviours.getBehaviour(actor.left.state);
+			if (behaviour == null)
+				continue;
 			CompoundTag compound = new CompoundTag();
 			compound.put("Pos", NbtUtils.writeBlockPos(actor.left.pos));
-			AllMovementBehaviours.getBehaviour(actor.left.state)
-				.writeExtraData(actor.right);
+			behaviour.writeExtraData(actor.right);
 			actor.right.writeToNBT(compound);
 			actorsNBT.add(compound);
 		}
@@ -1006,7 +1009,7 @@ public abstract class Contraption {
 		if (disassembled)
 			return;
 		disassembled = true;
-		
+
 		for (boolean nonBrittles : Iterate.trueAndFalse) {
 			for (StructureBlockInfo block : blocks.values()) {
 				if (nonBrittles == BlockMovementChecks.isBrittle(block.state))
@@ -1122,8 +1125,9 @@ public abstract class Contraption {
 	public void startMoving(Level world) {
 		for (MutablePair<StructureBlockInfo, MovementContext> pair : actors) {
 			MovementContext context = new MovementContext(world, pair.left, this);
-			AllMovementBehaviours.getBehaviour(pair.left.state)
-				.startMoving(context);
+			MovementBehaviour behaviour = AllMovementBehaviours.getBehaviour(pair.left.state);
+			if (behaviour != null)
+				behaviour.startMoving(context);
 			pair.setRight(context);
 		}
 	}
@@ -1139,8 +1143,12 @@ public abstract class Contraption {
 	}
 
 	public void forEachActor(Level world, BiConsumer<MovementBehaviour, MovementContext> callBack) {
-		for (MutablePair<StructureBlockInfo, MovementContext> pair : actors)
-			callBack.accept(AllMovementBehaviours.getBehaviour(pair.getLeft().state), pair.getRight());
+		for (MutablePair<StructureBlockInfo, MovementContext> pair : actors) {
+			MovementBehaviour behaviour = AllMovementBehaviours.getBehaviour(pair.getLeft().state);
+			if (behaviour == null)
+				continue;
+			callBack.accept(behaviour, pair.getRight());
+		}
 	}
 
 	protected boolean shouldUpdateAfterMovement(StructureBlockInfo info) {

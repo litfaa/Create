@@ -14,14 +14,10 @@ import com.simibubi.create.foundation.utility.WorldAttached;
 
 import io.github.fabricators_of_create.porting_lib.event.common.EntityEvents;
 import io.github.fabricators_of_create.porting_lib.event.common.EntityEvents.Teleport.EntityTeleportEvent;
-import io.github.fabricators_of_create.porting_lib.util.LevelUtil;
+import io.github.fabricators_of_create.porting_lib.fake_players.FakePlayer;
 import io.github.fabricators_of_create.porting_lib.util.PlantUtil;
-
-import dev.cafeteria.fakeplayerapi.server.FakePlayerBuilder;
-import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -54,14 +50,12 @@ public class BuiltinPotatoProjectileTypes {
 
 	private static final GameProfile ZOMBIE_CONVERTER_NAME =
 		new GameProfile(UUID.fromString("be12d3dc-27d3-4992-8c97-66be53fd49c5"), "Converter");
-	private static final WorldAttached<FakeServerPlayer> ZOMBIE_CONVERTERS =
+	private static final WorldAttached<FakePlayer> ZOMBIE_CONVERTERS =
 		new WorldAttached<>(w -> new ConverterFakePlayer((ServerLevel) w, ZOMBIE_CONVERTER_NAME){});
 
-	public static class ConverterFakePlayer extends FakeServerPlayer {
-		public static final FakePlayerBuilder BUILDER = new FakePlayerBuilder(new ResourceLocation("create", "converter"));
-
+	public static class ConverterFakePlayer extends FakePlayer {
 		public ConverterFakePlayer(ServerLevel world, GameProfile profile) {
-			super(BUILDER, world.getServer(), world, profile);
+			super(world, profile);
 		}
 	}
 
@@ -179,7 +173,7 @@ public class BuiltinPotatoProjectileTypes {
 				if (world.isClientSide)
 					return false;
 
-				FakeServerPlayer dummy = ZOMBIE_CONVERTERS.get(world);
+				FakePlayer dummy = ZOMBIE_CONVERTERS.get(world);
 				dummy.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.GOLDEN_APPLE, 1));
 				((ZombieVillager) entity).mobInteract(dummy, InteractionHand.MAIN_HAND);
 				return true;

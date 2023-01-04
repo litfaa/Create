@@ -51,7 +51,12 @@ public class ShootableGadgetItemMethods {
 			player.getItemInHand(InteractionHand.MAIN_HAND)
 				.getTag()
 				.remove("_Swap");
-		player.startUsingItem(hand);
+
+		// (#574) fabric: on forge, this condition is patched into startUsingItem
+		// skipping it causes an item to be used forever, only allowing 1 use before releasing and re-pressing the use button.
+		if (item.getUseDuration() > 0) {
+			player.startUsingItem(hand);
+		}
 		return false;
 	}
 

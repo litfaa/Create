@@ -47,13 +47,13 @@ public class AllContainerTypes {
 
 	public static final MenuEntry<ToolboxContainer> TOOLBOX =
 		register("toolbox", ToolboxContainer::new, () -> ToolboxScreen::new);
-	
+
 	public static final MenuEntry<ScheduleContainer> SCHEDULE =
 		register("schedule", ScheduleContainer::new, () -> ScheduleScreen::new);
 
 	private static <C extends AbstractContainerMenu, S extends Screen & MenuAccess<C>> MenuEntry<C> register(
 			String name, MenuBuilder.ForgeMenuFactory<C> factory, NonNullSupplier<ScreenFactory<C, S>> screenFactory) {
-		return Create.registrate()
+		return Create.REGISTRATE
 			.menu(name, factory, screenFactory)
 			.register();
 	}

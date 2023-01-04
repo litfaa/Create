@@ -34,7 +34,7 @@ public class SchematicRenderer {
 
 	private static final ThreadLocal<ThreadLocalObjects> THREAD_LOCAL_OBJECTS = ThreadLocal.withInitial(ThreadLocalObjects::new);
 
-	private final Map<RenderType, SuperByteBuffer> bufferCache = new LinkedHashMap<>(getLayerCount());
+	private final Map<RenderType, SuperByteBuffer> bufferCache = new LinkedHashMap<>();
 	private boolean active;
 	private boolean changed;
 	protected SchematicWorld schematic;
@@ -146,10 +146,11 @@ public class SchematicRenderer {
 		return new SuperByteBuffer(builder);
 	}
 
-	private static int getLayerCount() {
-		return RenderType.chunkBufferLayers()
-			.size();
-	}
+	// fabric: calling chunkBufferLayers early causes issues (#612), let the map handle its size on its own
+//	private static int getLayerCount() {
+//		return RenderType.chunkBufferLayers()
+//			.size();
+//	}
 
 	private static class ThreadLocalObjects {
 		public final PoseStack poseStack = new PoseStack();

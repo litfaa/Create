@@ -17,9 +17,6 @@ import com.simibubi.create.foundation.utility.BBHelper;
 import com.simibubi.create.foundation.utility.Iterate;
 
 import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
-import it.unimi.dsi.fastutil.PriorityQueue;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import net.minecraft.core.BlockPos;
@@ -28,6 +25,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.SortedArraySet;
 import net.minecraft.util.Unit;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -51,8 +49,8 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 
 	public static final BehaviourType<FluidFillingBehaviour> TYPE = new BehaviourType<>();
 
-	PriorityQueue<BlockPosEntry> queue;
-	List<BlockPosEntry> queueList = new ObjectArrayList<>();
+	// fabric: we need to save the queue for snapshots, so it must be a copyable type.
+	SortedArraySet<BlockPosEntry> queue;
 
 	List<BlockPosEntry> infinityCheckFrontier;
 	Set<BlockPos> infinityCheckVisited;
@@ -60,14 +58,13 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 	SnapshotParticipant<Data> snapshotParticipant = new SnapshotParticipant<>() {
 		@Override
 		protected Data createSnapshot() {
-			return new Data(new HashSet<>(visited), new ObjectArrayList<>(queueList), counterpartActed);
+			return new Data(new HashSet<>(visited), copySet(queue), counterpartActed);
 		}
 
 		@Override
 		protected void readSnapshot(Data snapshot) {
 			visited = snapshot.visited;
-			queueList = snapshot.queueList;
-			queue = new ObjectHeapPriorityQueue<>(queueList, (p, p2) -> -comparePositions(p, p2));
+			queue = snapshot.queue;
 			counterpartActed = snapshot.counterpartActed;
 		}
 	};
@@ -77,12 +74,12 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 		return snapshotParticipant;
 	}
 
-	record Data(Set<BlockPos> visited, List<BlockPosEntry> queueList, boolean counterpartActed) {
+	record Data(Set<BlockPos> visited, SortedArraySet<BlockPosEntry> queue, boolean counterpartActed) {
 	}
 
 	public FluidFillingBehaviour(SmartTileEntity te) {
 		super(te);
-		queue = new ObjectHeapPriorityQueue<>((p, p2) -> -comparePositions(p, p2));
+		queue = SortedArraySet.create((p, p2) -> -comparePositions(p, p2));
 		revalidateIn = 1;
 		infinityCheckFrontier = new ArrayList<>();
 		infinityCheckVisited = new HashSet<>();
@@ -102,8 +99,15 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 	}
 
 	protected void continueValidation(Fluid fluid) {
-		search(fluid, infinityCheckFrontier, infinityCheckVisited,
-			(p, d) -> infinityCheckFrontier.add(new BlockPosEntry(p, d)), true);
+		try {
+			search(fluid, infinityCheckFrontier, infinityCheckVisited,
+				(p, d) -> infinityCheckFrontier.add(new BlockPosEntry(p, d)), true);
+		} catch (ChunkNotLoadedException e) {
+			infinityCheckFrontier.clear();
+			setLongValidationTimer();
+			return;
+		}
+
 		int maxBlocks = maxBlocks();
 
 		if (infinityCheckVisited.size() > maxBlocks && maxBlocks != -1 && !fillInfinite()) {
@@ -132,8 +136,7 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 			reset(ctx);
 			rootPos = root;
 			BlockPosEntry e = new BlockPosEntry(root, 0);
-			queue.enqueue(e);
-			queueList.add(e);
+			queue.add(e);
 			affectedArea = BoundingBox.fromCorners(rootPos, rootPos);
 			return false;
 		}
@@ -188,11 +191,10 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 		boolean success = false;
 		for (int i = 0; !success && !queue.isEmpty() && i < searchedPerTick; i++) {
 			BlockPosEntry entry = queue.first();
-			BlockPos currentPos = entry.pos;
+			BlockPos currentPos = entry.pos();
 
 			if (visited.contains(currentPos)) {
-				BlockPosEntry e = queue.dequeue();
-				queueList.remove(e);
+				dequeue(queue);
 				continue;
 			}
 
@@ -204,7 +206,6 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 				if (!fillInfinite()) {
 					visited.clear();
 					queue.clear();
-					queueList.clear();
 				return false;}
 			}
 
@@ -249,8 +250,7 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 			}
 
 			visited.add(currentPos);
-			BlockPosEntry e = queue.dequeue();
-			queueList.remove(e);
+			dequeue(queue);
 
 			for (Direction side : Iterate.directions) {
 				if (side == Direction.UP)
@@ -263,12 +263,8 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 					continue;
 
 				SpaceType nextSpaceType = getAtPos(world, offsetPos, fluid);
-				if (nextSpaceType != SpaceType.BLOCKING) {
-					BlockPosEntry posEntry = new BlockPosEntry(offsetPos, entry.distance + 1);
-					queue.enqueue(posEntry);
-					queueList.add(posEntry);
-				}
-
+				if (nextSpaceType != SpaceType.BLOCKING)
+					queue.add(new BlockPosEntry(offsetPos, entry.distance() + 1));
 			}
 		}
 
@@ -280,10 +276,7 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 	protected void softReset(BlockPos root) {
 		visited.clear();
 		queue.clear();
-		queueList.clear();
-		BlockPosEntry e = new BlockPosEntry(root, 0);
-		queue.enqueue(e);
-		queueList.add(e);
+		queue.add(new BlockPosEntry(root, 0));
 		infinite = false;
 		setValidationTimer();
 		tileEntity.sendData();
@@ -348,7 +341,6 @@ public class FluidFillingBehaviour extends FluidManipulationBehaviour {
 	public void reset(@Nullable TransactionContext ctx) {
 		super.reset(ctx);
 		queue.clear();
-		queueList.clear();
 		infinityCheckFrontier.clear();
 		infinityCheckVisited.clear();
 	}

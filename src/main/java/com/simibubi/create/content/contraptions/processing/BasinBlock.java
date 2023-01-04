@@ -173,15 +173,7 @@ public class BasinBlock extends Block implements ITE<BasinTileEntity>, IWrenchab
 
 	@Override
 	public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-		if (!state.hasBlockEntity() || state.getBlock() == newState.getBlock())
-			return;
-		TileEntityBehaviour.destroy(worldIn, pos, FilteringBehaviour.TYPE);
-		withTileEntityDo(worldIn, pos, te -> {
-			ItemHelper.dropContents(worldIn, pos, te.inputInventory);
-			ItemHelper.dropContents(worldIn, pos, te.outputInventory);
-			te.spoutputBuffer.forEach(is -> Block.popResource(worldIn, pos, is));
-		});
-		worldIn.removeBlockEntity(pos);
+		ITE.onRemove(state, worldIn, pos, newState);
 	}
 
 	@Override

@@ -286,8 +286,8 @@ public class ItemDrainTileEntity extends SmartTileEntity implements IHaveGoggleI
 	}
 
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
+	public void invalidate() {
+		super.invalidate();
 	}
 
 	public void setHeldItem(TransportedItemStack heldItem, Direction insertedFrom) {
