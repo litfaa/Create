@@ -6,10 +6,10 @@ import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.fluid.SmartFluidTank;
 
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.BlockPos;
@@ -107,6 +107,11 @@ public class HosePulleyFluidHandler implements SingleSlotStorage<FluidVariant> {
 		return Long.MAX_VALUE;
 	}
 
+	@Override
+	public StorageView<FluidVariant> getUnderlyingView() {
+		return internalTank;
+	}
+
 	//
 
 	private SmartFluidTank internalTank;
@@ -116,7 +121,7 @@ public class HosePulleyFluidHandler implements SingleSlotStorage<FluidVariant> {
 	private Supplier<Boolean> predicate;
 
 	public HosePulleyFluidHandler(SmartFluidTank internalTank, FluidFillingBehaviour filler,
-		FluidDrainingBehaviour drainer, Supplier<BlockPos> rootPosGetter, Supplier<Boolean> predicate) {
+								  FluidDrainingBehaviour drainer, Supplier<BlockPos> rootPosGetter, Supplier<Boolean> predicate) {
 		this.internalTank = internalTank;
 		this.filler = filler;
 		this.drainer = drainer;

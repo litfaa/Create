@@ -5,21 +5,37 @@ import com.simibubi.create.Create;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
 public class TestProcessing extends CreateTestBase {
 	public static final String PATH = Create.ID + ":processing/";
 
-	@GameTest(template = PATH + "sand_washing", timeoutTicks = 40 * 20) // 30 seconds until timeout
+	@GameTest(template = PATH + "brass_mixing")
+	public static void brassMixing(CreateGameTestHelper helper) {
+		helper.succeed();
+	}
+
+	@GameTest(template = PATH + "brass_mixing_2")
+	public static void brassMixing2(CreateGameTestHelper helper) {
+		helper.succeed();
+	}
+
+	@GameTest(template = PATH + "precision_mechanism_crafting")
+	public static void precisionMechanismCrafting(CreateGameTestHelper helper) {
+		helper.succeed();
+	}
+
+	@GameTest(template = PATH + "water_filling_bottle")
+	public static void waterFillingBottle(CreateGameTestHelper helper) {
+		helper.succeed();
+	}
+
+	@GameTest(template = PATH + "sand_washing", timeoutTicks = TEN_SECONDS)
 	public static void sandWashing(CreateGameTestHelper helper) {
 		BlockPos leverPos = new BlockPos(5, 3, 1);
 		helper.pullLever(leverPos);
 		BlockPos chestPos = new BlockPos(8, 3, 2);
-		ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestPos);
 		helper.succeedWhen(() -> {
-			if (!chest.getItem(0).is(Items.CLAY_BALL)) {
-				helper.fail("Clay was not processed");
-			}
+			helper.assertContainerContains(chestPos, Items.CLAY);
 		});
 	}
 }

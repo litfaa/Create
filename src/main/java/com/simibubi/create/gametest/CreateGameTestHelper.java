@@ -1,19 +1,35 @@
 package com.simibubi.create.gametest;
 
+import java.util.List;
+
+import org.jetbrains.annotations.Contract;
+
+import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.mixin.accessor.GameTestHelperAccessor;
+import com.simibubi.create.foundation.tileEntity.IMultiTileContainer;
+import com.simibubi.create.foundation.utility.RegisteredObjects;
 
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestInfo;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 /**
  * An extension to {@link GameTestHelper} with added utilities.
@@ -42,17 +58,14 @@ public class CreateGameTestHelper extends GameTestHelper {
 	public void flipBlock(BlockPos pos) {
 		BlockState original = getBlockState(pos);
 		if (!original.hasProperty(BlockStateProperties.FACING))
-			throw new GameTestAssertException("FACING property not in block: " + Registry.BLOCK.getId(original.getBlock()));
+			fail("FACING property not in block: " + Registry.BLOCK.getId(original.getBlock()));
 		Direction facing = original.getValue(BlockStateProperties.FACING);
 		BlockState reversed = original.setValue(BlockStateProperties.FACING, facing.getOpposite());
 		setBlock(pos, reversed);
 	}
 
 	public FluidStack getTankContents(BlockPos tank) {
-		BlockPos pos = absolutePos(tank);
-		Storage<FluidVariant> storage = TransferUtil.getFluidStorage(getLevel(), pos);
-		if (storage == null)
-			throw new GameTestAssertException("No fluid storage at pos: " + pos);
+		Storage<FluidVariant> storage = fluidStorageAt(tank);
 		return TransferUtil.simulateExtractAnyFluid(storage, Long.MAX_VALUE);
 	}
 
@@ -65,5 +78,137 @@ public class CreateGameTestHelper extends GameTestHelper {
 			total += getTankContents(tank).getAmount();
 		}
 		return total;
+	}
+
+	public Storage<ItemVariant> itemStorageAt(BlockPos pos) {
+		Storage<ItemVariant> storage = TransferUtil.getItemStorage(getLevel(), absolutePos(pos));
+		if (storage == null)
+			fail("Storage not present");
+		return storage;
+	}
+
+	public Storage<FluidVariant> fluidStorageAt(BlockPos pos) {
+		Storage<FluidVariant> storage = TransferUtil.getFluidStorage(getLevel(), absolutePos(pos));
+		if (storage == null)
+			fail("Storage not present");
+		return storage;
+	}
+
+	public <T extends BlockEntity> T getBlockEntity(BlockEntityType<T> type, BlockPos pos) {
+		BlockEntity be = getBlockEntity(pos);
+		BlockEntityType<?> actualType = be == null ? null : be.getType();
+		if (actualType != type) {
+			String actualId = actualType == null ? "null" : RegisteredObjects.getKeyOrThrow(actualType).toString();
+			String error = "Expected block entity at pos [%s] with type [%s], got [%s]".formatted(
+					pos, RegisteredObjects.getKeyOrThrow(type), actualId
+			);
+			fail(error);
+		}
+		return (T) be;
+	}
+
+	public <T extends BlockEntity & IMultiTileContainer> T getControllerBlockEntity(BlockEntityType<T> type, BlockPos anySegment) {
+		T be = getBlockEntity(type, anySegment).getControllerTE();
+		if (be == null)
+			fail("Could not get block entity controller with type [%s] from pos [%s]".formatted(RegisteredObjects.getKeyOrThrow(type), anySegment));
+		return be;
+	}
+
+	public void assertSecondsPassed(int seconds) {
+		if (getTick() < seconds * 20L)
+			fail("Waiting for %s seconds to pass".formatted(seconds));
+	}
+
+	public void assertAnyContained(BlockPos pos, Item... items) {
+		Storage<ItemVariant> storage = itemStorageAt(pos);
+		boolean anyFound = false;
+		try (Transaction t = Transaction.openOuter()) {
+			for (Item item : items) {
+				anyFound |= storage.extract(ItemVariant.of(item), 1, t) != 0;
+			}
+		}
+		if (!anyFound)
+			fail("No mathing items found in storage at pos: " + pos);
+	}
+
+	public void assertAllStacksPresent(List<ItemStack> stacks, BlockPos pos) {
+		Storage<ItemVariant> storage = itemStorageAt(pos);
+		try (Transaction t = Transaction.openOuter()) {
+			for (ItemStack stack : stacks) {
+				long extracted = storage.extract(ItemVariant.of(stack), stack.getCount(), t);
+				if (extracted != stack.getCount()) {
+					ItemStack extractedStack = extracted == 0
+							? ItemStack.EMPTY
+							: ItemHandlerHelper.copyStackWithSize(stack, ItemHelper.truncateLong(extracted));
+					fail("Item [%s] not extracted as expected; got [%s]".formatted(stack, extractedStack));
+				}
+			}
+		}
+	}
+
+	public void assertFluidPresent(FluidStack fluid, BlockPos pos) {
+		FluidStack contained = getTankContents(pos);
+		if (!fluid.isFluidEqual(contained))
+			fail("Different fluids");
+		if (fluid.getAmount() != contained.getAmount())
+			fail("Different amounts");
+	}
+
+	public void assertTankEmpty(BlockPos pos) {
+		assertFluidPresent(FluidStack.EMPTY, pos);
+	}
+
+	public <T extends Entity> T getFirstEntity(EntityType<T> type, BlockPos pos) {
+		List<T> list = getEntitiesBetween(type, pos.north().east().above(), pos.south().west().below());
+		if (list.isEmpty())
+			fail("No entities at pos: " + pos);
+		return list.get(0);
+	}
+
+	public <T extends Entity> List<T> getEntitiesBetween(EntityType<T> type, BlockPos pos1, BlockPos pos2) {
+		BoundingBox box = BoundingBox.fromCorners(absolutePos(pos1), absolutePos(pos2));
+		List<? extends T> entities = getLevel().getEntities(type, e -> box.isInside(e.blockPosition()));
+		return (List<T>) entities;
+	}
+
+	public void assertCloseEnoughTo(double value, double expected) {
+		assertInRange(value, expected - 1, expected + 1);
+	}
+
+	public void assertInRange(double value, double min, double max) {
+		if (value < min)
+			fail("Value %s below expected min of %s".formatted(value, min));
+		if (value > max)
+			fail("Value %s greater than expected max of %s".formatted(value, max));
+	}
+
+	@Override
+	public void assertContainerEmpty(BlockPos pos) {
+		super.assertContainerEmpty(pos);
+		// extra check for FAPI storages
+		Storage<ItemVariant> storage = itemStorageAt(pos);
+		try (Transaction t = Transaction.openOuter()) {
+			if (!TransferUtil.extractAnyItem(storage, 1).isEmpty()) {
+				fail("Storage not empty");
+			}
+		}
+	}
+
+	@Override
+	public void assertContainerContains(BlockPos pos, Item item) {
+		super.assertContainerContains(pos, item);
+		// extra check for FAPI storages
+		Storage<ItemVariant> storage = itemStorageAt(pos);
+		try (Transaction t = Transaction.openOuter()) {
+			if (storage.extract(ItemVariant.of(item), 1, t) != 1) {
+				fail("Storage does not contain " + item);
+			}
+		}
+	}
+
+	@Contract("_->fail")
+	@Override
+	public void fail(String exceptionMessage) {
+		super.fail(exceptionMessage);
 	}
 }

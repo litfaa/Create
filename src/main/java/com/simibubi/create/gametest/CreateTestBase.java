@@ -10,6 +10,11 @@ import net.minecraft.gametest.framework.GameTestHelper;
  * Tests in subclasses should take a {@link CreateGameTestHelper} instead of a {@link GameTestHelper}
  */
 public class CreateTestBase implements FabricGameTest {
+	public static final int TICKS_PER_SECOND = 20;
+	public static final int TEN_SECONDS = 10 * TICKS_PER_SECOND;
+	public static final int TWENTY_SECONDS = 20 * TICKS_PER_SECOND;
+	public static final int FORTY_SECONDS = 40 * TICKS_PER_SECOND;
+
 	@Override
 	public void invokeTestMethod(GameTestHelper context, Method method) {
 		context = CreateGameTestHelper.make(context);
