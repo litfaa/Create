@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.jetbrains.annotations.Contract;
 
+import com.simibubi.create.AllTileEntities;
+import com.simibubi.create.content.logistics.block.redstone.NixieTubeTileEntity;
 import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.mixin.accessor.GameTestHelperAccessor;
 import com.simibubi.create.foundation.tileEntity.IMultiTileContainer;
@@ -21,8 +23,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestInfo;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -30,6 +34,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * An extension to {@link GameTestHelper} with added utilities.
@@ -64,6 +69,14 @@ public class CreateGameTestHelper extends GameTestHelper {
 		setBlock(pos, reversed);
 	}
 
+	public ItemEntity spawnItem(BlockPos pos, ItemStack stack) {
+		Vec3 spawn = Vec3.atCenterOf(absolutePos(pos));
+		ServerLevel level = getLevel();
+		ItemEntity item = new ItemEntity(level, spawn.x, spawn.y, spawn.z, stack, 0, 0, 0);
+		level.addFreshEntity(item);
+		return item;
+	}
+
 	public FluidStack getTankContents(BlockPos tank) {
 		Storage<FluidVariant> storage = fluidStorageAt(tank);
 		return TransferUtil.simulateExtractAnyFluid(storage, Long.MAX_VALUE);
@@ -85,6 +98,11 @@ public class CreateGameTestHelper extends GameTestHelper {
 		if (storage == null)
 			fail("Storage not present");
 		return storage;
+	}
+
+	public long getTotalItems(BlockPos pos) {
+		Storage<ItemVariant> storage = itemStorageAt(pos);
+		return TransferUtil.getAllItems(storage).stream().mapToLong(ItemStack::getCount).sum();
 	}
 
 	public Storage<FluidVariant> fluidStorageAt(BlockPos pos) {
@@ -171,6 +189,13 @@ public class CreateGameTestHelper extends GameTestHelper {
 		return (List<T>) entities;
 	}
 
+	public void assertNixieRedstone(BlockPos pos, int strength) {
+		NixieTubeTileEntity nixie = getBlockEntity(AllTileEntities.NIXIE_TUBE.get(), pos);
+		int actualStrength = nixie.getRedstoneStrength();
+		if (actualStrength != strength)
+			fail("Expected nixie tube at %s to have power of %s, got %s".formatted(pos, strength, actualStrength));
+	}
+
 	public void assertCloseEnoughTo(double value, double expected) {
 		assertInRange(value, expected - 1, expected + 1);
 	}
@@ -180,6 +205,10 @@ public class CreateGameTestHelper extends GameTestHelper {
 			fail("Value %s below expected min of %s".formatted(value, min));
 		if (value > max)
 			fail("Value %s greater than expected max of %s".formatted(value, max));
+	}
+
+	public void whenSecondsPassed(int seconds, Runnable run) {
+		runAfterDelay((long) seconds * CreateTestBase.TICKS_PER_SECOND, run);
 	}
 
 	@Override
@@ -196,12 +225,22 @@ public class CreateGameTestHelper extends GameTestHelper {
 
 	@Override
 	public void assertContainerContains(BlockPos pos, Item item) {
-		super.assertContainerContains(pos, item);
-		// extra check for FAPI storages
+		// support FAPI storages
 		Storage<ItemVariant> storage = itemStorageAt(pos);
 		try (Transaction t = Transaction.openOuter()) {
-			if (storage.extract(ItemVariant.of(item), 1, t) != 1) {
+			long extracted = storage.extract(ItemVariant.of(item), 1, t);
+			if (extracted != 1) {
 				fail("Storage does not contain " + item);
+			}
+		}
+	}
+
+	public void assertContainerContains(BlockPos pos, ItemVariant item) {
+		Storage<ItemVariant> storage = itemStorageAt(pos);
+		try (Transaction t = Transaction.openOuter()) {
+			long extracted = storage.extract(item, 1, t);
+			if (extracted != 1) {
+				fail("Storage does not contain " + item.getItem());
 			}
 		}
 	}
