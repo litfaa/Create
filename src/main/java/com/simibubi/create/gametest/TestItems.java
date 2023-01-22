@@ -9,21 +9,21 @@ public class TestItems extends CreateTestBase {
 
 	@GameTest(template = PATH + "arm_purgatory")
 	public static void armPurgatory(CreateGameTestHelper helper) {
-		helper.succeed();
+		helper.fail("NYI");
 	}
 
 	@GameTest(template = PATH + "content_observer_counting")
 	public static void contentObserverCounting(CreateGameTestHelper helper) {
-		helper.succeed();
+		helper.fail("NYI");
 	}
 
 	@GameTest(template = PATH + "storages")
 	public static void storages(CreateGameTestHelper helper) {
-		helper.succeed();
+		helper.fail("NYI");
 	}
 
 	@GameTest(template = PATH + "vault_comparator_output")
 	public static void vaultComparatorOutput(CreateGameTestHelper helper) {
-		helper.succeed();
+		helper.fail("NYI");
 	}
 }

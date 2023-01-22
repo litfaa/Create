@@ -11,22 +11,22 @@ public class TestProcessing extends CreateTestBase {
 
 	@GameTest(template = PATH + "brass_mixing")
 	public static void brassMixing(CreateGameTestHelper helper) {
-		helper.succeed();
+		helper.fail("NYI");
 	}
 
 	@GameTest(template = PATH + "brass_mixing_2")
 	public static void brassMixing2(CreateGameTestHelper helper) {
-		helper.succeed();
+		helper.fail("NYI");
 	}
 
 	@GameTest(template = PATH + "precision_mechanism_crafting")
 	public static void precisionMechanismCrafting(CreateGameTestHelper helper) {
-		helper.succeed();
+		helper.fail("NYI");
 	}
 
 	@GameTest(template = PATH + "water_filling_bottle")
 	public static void waterFillingBottle(CreateGameTestHelper helper) {
-		helper.succeed();
+		helper.fail("NYI");
 	}
 
 	@GameTest(template = PATH + "sand_washing", timeoutTicks = TEN_SECONDS)
