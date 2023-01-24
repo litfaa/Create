@@ -5,10 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.Contract;
 
 import com.simibubi.create.AllTileEntities;
+import com.simibubi.create.content.logistics.block.belts.tunnel.BrassTunnelTileEntity.SelectionMode;
 import com.simibubi.create.content.logistics.block.redstone.NixieTubeTileEntity;
 import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.mixin.accessor.GameTestHelperAccessor;
 import com.simibubi.create.foundation.tileEntity.IMultiTileContainer;
+import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
+import com.simibubi.create.foundation.tileEntity.behaviour.BehaviourType;
+import com.simibubi.create.foundation.tileEntity.behaviour.scrollvalue.ScrollOptionBehaviour;
+import com.simibubi.create.foundation.tileEntity.behaviour.scrollvalue.ScrollValueBehaviour;
 import com.simibubi.create.foundation.utility.RegisteredObjects;
 
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
@@ -29,6 +34,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -137,6 +143,10 @@ public class CreateGameTestHelper extends GameTestHelper {
 			fail("Waiting for %s seconds to pass".formatted(seconds));
 	}
 
+	public long secondsPassed() {
+		return getTick() % 20;
+	}
+
 	public void assertAnyContained(BlockPos pos, Item... items) {
 		Storage<ItemVariant> storage = itemStorageAt(pos);
 		boolean anyFound = false;
@@ -211,6 +221,18 @@ public class CreateGameTestHelper extends GameTestHelper {
 		runAfterDelay((long) seconds * CreateTestBase.TICKS_PER_SECOND, run);
 	}
 
+	public <T extends TileEntityBehaviour> T getBehavior(BlockPos pos, BehaviourType<T> type) {
+		T behavior = TileEntityBehaviour.get(getLevel(), absolutePos(pos), type);
+		if (behavior == null)
+			fail("Behavior at " + pos + " missing, expected " + type.getName());
+		return behavior;
+	}
+
+	public void setTunnelMode(BlockPos pos, SelectionMode mode) {
+		ScrollValueBehaviour behavior = getBehavior(pos, ScrollOptionBehaviour.TYPE);
+		behavior.setValue(mode.ordinal());
+	}
+
 	@Override
 	public void assertContainerEmpty(BlockPos pos) {
 		super.assertContainerEmpty(pos);
@@ -223,31 +245,41 @@ public class CreateGameTestHelper extends GameTestHelper {
 		}
 	}
 
-	@Override
-	public void assertContainerContains(BlockPos pos, Item item) {
-		// support FAPI storages
-		Storage<ItemVariant> storage = itemStorageAt(pos);
-		try (Transaction t = Transaction.openOuter()) {
-			long extracted = storage.extract(ItemVariant.of(item), 1, t);
-			if (extracted != 1) {
-				fail("Storage does not contain " + item);
-			}
+	public void assertContainersEmpty(List<BlockPos> positions) {
+		for (BlockPos pos : positions) {
+			assertContainerEmpty(pos);
 		}
 	}
 
-	public void assertContainerContains(BlockPos pos, ItemVariant item) {
-		Storage<ItemVariant> storage = itemStorageAt(pos);
-		try (Transaction t = Transaction.openOuter()) {
-			long extracted = storage.extract(item, 1, t);
-			if (extracted != 1) {
-				fail("Storage does not contain " + item.getItem());
-			}
-		}
-	}
-
-	@Contract("_->fail")
+	@Contract("_->fail") // make IDEA happier
 	@Override
 	public void fail(String exceptionMessage) {
 		super.fail(exceptionMessage);
+	}
+
+	// support FAPI storages
+
+	@Override
+	public void assertContainerContains(BlockPos pos, Item item) {
+		assertContainerContains(pos, new ItemStack(item));
+	}
+
+	public void assertContainerContains(BlockPos pos, ItemLike item) {
+		assertContainerContains(pos, item.asItem());
+	}
+
+	public void assertContainerContains(BlockPos pos, ItemVariant item) {
+		assertContainerContains(pos, item.toStack());
+	}
+
+	public void assertContainerContains(BlockPos pos, ItemStack item) {
+		Storage<ItemVariant> storage = itemStorageAt(pos);
+		try (Transaction t = Transaction.openOuter()) {
+			int count = item.getCount();
+			long extracted = storage.extract(ItemVariant.of(item), count, t);
+			if (extracted != count) {
+				fail("Storage does not contain " + item.getItem());
+			}
+		}
 	}
 }

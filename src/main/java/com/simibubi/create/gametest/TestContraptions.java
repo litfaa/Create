@@ -13,6 +13,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeverBlock;
 
 public class TestContraptions extends CreateTestBase {
@@ -80,4 +81,27 @@ public class TestContraptions extends CreateTestBase {
 			helper.assertTankEmpty(tank); // verify nothing left
 		});
 	}
+
+	@GameTest(template = PATH + "ploughing")
+	public static void ploughing(CreateGameTestHelper helper) {
+		BlockPos dirt = new BlockPos(4, 2, 1);
+		BlockPos lever = new BlockPos(3, 3, 2);
+		helper.pullLever(lever);
+		helper.succeedWhen(() -> helper.assertBlockPresent(Blocks.FARMLAND, dirt));
+	}
+
+	@GameTest(template = PATH + "redstone_contacts")
+	public static void redstoneContacts(CreateGameTestHelper helper) {
+		BlockPos end = new BlockPos(5, 10, 1);
+		BlockPos lever = new BlockPos(1, 3, 2);
+		helper.pullLever(lever);
+		helper.succeedWhen(() -> helper.assertBlockPresent(Blocks.DIAMOND_BLOCK, end));
+	}
+
+	// FIXME: trains do not enjoy being loaded in structures
+	// https://gist.github.com/TropheusJ/f2d0a7df48360d2e078d0987c115c6ef
+//	@GameTest(template = PATH + "train_observer")
+//	public static void trainObserver(CreateGameTestHelper helper) {
+//		helper.fail("NYI");
+//	}
 }
