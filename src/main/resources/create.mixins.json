@@ -11,6 +11,7 @@
     "accessor.AbstractProjectileDispenseBehaviorAccessor",
     "accessor.DispenserBlockAccessor",
     "accessor.FallingBlockEntityAccessor",
+    "accessor.GameTestHelperAccessor",
     "accessor.LivingEntityAccessor",
     "accessor.ServerLevelAccessor",
     "fabric.AbstractMinecartMixin",

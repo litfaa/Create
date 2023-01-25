@@ -28,7 +28,9 @@
       "com.simibubi.create.CreateData"
     ],
     "fabric-gametest": [
+      "com.simibubi.create.gametest.TestContraptions",
       "com.simibubi.create.gametest.TestFluids",
+      "com.simibubi.create.gametest.TestItems",
       "com.simibubi.create.gametest.TestMisc",
       "com.simibubi.create.gametest.TestProcessing"
     ],
