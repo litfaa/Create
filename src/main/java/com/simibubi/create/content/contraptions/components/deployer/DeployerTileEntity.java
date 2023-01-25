@@ -29,8 +29,7 @@ import com.simibubi.create.foundation.utility.NBTHelper;
 import com.simibubi.create.foundation.utility.VecHelper;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
-import io.github.fabricators_of_create.porting_lib.transfer.item.RecipeWrapper;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandlerContainer;
 import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -546,7 +545,7 @@ public class DeployerTileEntity extends KineticTileEntity implements SidedStorag
 		animatedOffset.setValue(offset);
 	}
 
-	RecipeWrapper recipeInv = new RecipeWrapper(new ItemStackHandler(2));
+	ItemStackHandlerContainer recipeInv = new ItemStackHandlerContainer(2);
 	SandPaperInv sandpaperInv = new SandPaperInv(ItemStack.EMPTY);
 
 	@Nullable

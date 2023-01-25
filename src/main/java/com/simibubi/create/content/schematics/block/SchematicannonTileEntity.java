@@ -492,8 +492,7 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		if (usage == ItemUseType.DAMAGE) {
 			for (Storage<ItemVariant> iItemHandler : attachedInventories) {
 				try (Transaction t = transaction.openNested()) {
-					for (StorageView<ItemVariant> view : iItemHandler) {
-						if (view.isResourceBlank()) continue;
+					for (StorageView<ItemVariant> view : TransferUtil.getNonEmpty(iItemHandler)) {
 						ItemVariant variant = view.getResource();
 						ItemStack stack = variant.toStack();
 						if (!required.matches(stack))

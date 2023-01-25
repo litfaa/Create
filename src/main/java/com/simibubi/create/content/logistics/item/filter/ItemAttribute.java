@@ -25,8 +25,7 @@ import com.simibubi.create.content.logistics.item.filter.attribute.astralsorcery
 import com.simibubi.create.content.logistics.item.filter.attribute.astralsorcery.AstralSorceryPerkGemAttribute;
 import com.simibubi.create.foundation.utility.Lang;
 
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
-import io.github.fabricators_of_create.porting_lib.transfer.item.RecipeWrapper;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandlerContainer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
@@ -151,7 +150,7 @@ public interface ItemAttribute {
 		BLASTABLE((s, w) -> testRecipe(s, w, RecipeType.BLASTING)),
 		COMPOSTABLE(s -> ComposterBlock.COMPOSTABLES.containsKey(s.getItem()));
 
-		private static final RecipeWrapper RECIPE_WRAPPER = new RecipeWrapper(new ItemStackHandler(1));
+		private static final Container RECIPE_WRAPPER = new ItemStackHandlerContainer(1);
 		private Predicate<ItemStack> test;
 		private BiPredicate<ItemStack, Level> testWithWorld;
 

@@ -262,7 +262,7 @@ public class EjectorTileEntity extends KineticTileEntity implements SidedStorage
 
 		ItemStackHandler outputs = depotBehaviour.processingOutputBuffer;
 		try (Transaction t = TransferUtil.getTransaction()) {
-			for (StorageView<ItemVariant> view : outputs) {
+			for (StorageView<ItemVariant> view : TransferUtil.getNonEmpty(outputs)) {
 				ItemVariant var = view.getResource();
 				long extracted = view.extract(view.getResource(), 64, t);
 				if (extracted != 0)
@@ -480,7 +480,7 @@ public class EjectorTileEntity extends KineticTileEntity implements SidedStorage
 		return launcher.getGlobalVelocity(time, getFacing().getOpposite(), worldPosition)
 			.scale(.5f);
 	}
-	
+
 	@Override
 	public void destroy() {
 		super.destroy();

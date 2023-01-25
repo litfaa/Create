@@ -93,8 +93,7 @@ public class BasinRecipe extends ProcessingRecipe<SmartInventory> {
 
 		try (Transaction t = TransferUtil.getTransaction()) {
 			Ingredients: for (Ingredient ingredient : ingredients) {
-				for (StorageView<ItemVariant> view : availableItems) {
-					if (view.isResourceBlank()) continue;
+				for (StorageView<ItemVariant> view : TransferUtil.getNonEmpty(availableItems)) {
 					ItemVariant var = view.getResource();
 					ItemStack stack = var.toStack();
 					if (!ingredient.test(stack)) continue;
@@ -113,8 +112,7 @@ public class BasinRecipe extends ProcessingRecipe<SmartInventory> {
 			boolean fluidsAffected = false;
 			FluidIngredients: for (FluidIngredient fluidIngredient : fluidIngredients) {
 			long amountRequired = fluidIngredient.getRequiredAmount();
-				for (StorageView<FluidVariant> view : availableFluids) {
-					if (view.isResourceBlank()) continue;
+				for (StorageView<FluidVariant> view : TransferUtil.getNonEmpty(availableFluids)) {
 					FluidStack fluidStack = new FluidStack(view);
 					if (!fluidIngredient.test(fluidStack)) continue;
 					long drainedAmount = Math.min(amountRequired, fluidStack.getAmount());
