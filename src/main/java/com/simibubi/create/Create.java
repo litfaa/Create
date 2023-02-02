@@ -58,7 +58,7 @@ public class Create implements ModInitializer {
 
 	public static final String ID = "create";
 	public static final String NAME = "Create";
-	public static final String VERSION = "0.5g";
+	public static final String VERSION = "0.5i";
 
 	public static final Logger LOGGER = LogUtils.getLogger();
 
@@ -142,6 +142,7 @@ public class Create implements ModInitializer {
 			AllAdvancements.register();
 			AllTriggers.register();
 			BoilerHeaters.registerDefaults();
+			AllFluids.registerFluidInteractions();
 //		});
 	}
 

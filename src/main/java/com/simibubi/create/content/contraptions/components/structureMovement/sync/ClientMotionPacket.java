@@ -2,9 +2,9 @@ package com.simibubi.create.content.contraptions.components.structureMovement.sy
 
 import java.util.function.Supplier;
 
+import com.simibubi.create.foundation.mixin.fabric.ServerGamePacketListenerImplAccessor;
 import com.simibubi.create.foundation.networking.AllPackets;
 import com.simibubi.create.foundation.networking.SimplePacketBase;
-import io.github.fabricators_of_create.porting_lib.mixin.common.accessor.ServerGamePacketListenerImplAccessor;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -51,7 +51,9 @@ public class ClientMotionPacket extends SimplePacketBase {
 				if (onGround) {
 					sender.causeFallDamage(sender.fallDistance, 1, DamageSource.FALL);
 					sender.fallDistance = 0;
-					((ServerGamePacketListenerImplAccessor)sender.connection).port_lib$setAboveGroundTickCount(0);
+					ServerGamePacketListenerImplAccessor access = (ServerGamePacketListenerImplAccessor) sender.connection;
+					access.create$setAboveGroundTickCount(0);
+					access.create$setAboveGroundVehicleTickCount(0);
 				}
 				AllPackets.channel.sendToClientsTracking(new LimbSwingUpdatePacket(sender.getId(), sender.position(), limbSwing), sender);
 			});

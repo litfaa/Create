@@ -1,6 +1,5 @@
 package com.simibubi.create.content.contraptions.components.structureMovement;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -13,11 +12,11 @@ import io.github.fabricators_of_create.porting_lib.entity.RemovalFromWorldListen
 
 import io.github.fabricators_of_create.porting_lib.util.EnvExecutor;
 
+import com.simibubi.create.foundation.utility.ContraptionData;
+
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.MutablePair;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.AllMovementBehaviours;
@@ -51,7 +50,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -602,22 +600,10 @@ public abstract class AbstractContraptionEntity extends Entity implements ExtraS
 		CompoundTag compound = new CompoundTag();
 		writeAdditional(compound, true);
 
-		try {
-			ByteArrayDataOutput dataOutput = ByteStreams.newDataOutput();
-			NbtIo.write(compound, dataOutput);
-			byte[] byteArray = dataOutput.toByteArray();
-			int estimatedPacketSize = byteArray.length;
-			if (estimatedPacketSize > 2_000_000) {
-				Create.LOGGER.warn("Could not send Contraption Spawn Data (Packet too big): "
-					+ getContraption().getType().id + " @" + position() + " (" + getUUID().toString() + ")");
-				buffer.writeNbt(new CompoundTag());
-				return;
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-			buffer.writeNbt(new CompoundTag());
-			return;
+		if (ContraptionData.isTooLargeForSync(compound)) {
+			String info = getContraption().getType().id + " @" + position() + " (" + getStringUUID() + ")";
+			Create.LOGGER.warn("Could not send Contraption Spawn Data (Packet too big): " + info);
+			compound = null;
 		}
 
 		buffer.writeNbt(compound);
@@ -637,7 +623,10 @@ public abstract class AbstractContraptionEntity extends Entity implements ExtraS
 
 	@Override
 	public void readSpawnData(FriendlyByteBuf additionalData) {
-		readAdditional(additionalData.readNbt(), true);
+		CompoundTag nbt = additionalData.readAnySizeNbt();
+		if (nbt != null) {
+			readAdditional(nbt, true);
+		}
 	}
 
 	@Override
@@ -760,7 +749,7 @@ public abstract class AbstractContraptionEntity extends Entity implements ExtraS
 
 	protected abstract float getStalledAngle();
 
-	protected abstract void handleStallInformation(float x, float y, float z, float angle);
+	protected abstract void handleStallInformation(double x, double y, double z, float angle);
 
 	@Environment(EnvType.CLIENT)
 	protected void handleBlockChange(BlockPos localPos, BlockState newState) {

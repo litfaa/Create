@@ -35,7 +35,8 @@ public class ItemHandlerBeltSegment implements SingleSlotStorage<ItemVariant> {
 		if (transported == null)
 			return 0;
 
-		int toExtract = Math.min((int) maxAmount, transported.stack.getCount());
+		// TODO PORT
+		int toExtract = (int) Math.min(maxAmount, transported.stack.getCount());
 		this.beltInventory.snapshotParticipant.updateSnapshots(transaction);
 		transported.stack.shrink(toExtract);
 		return toExtract;

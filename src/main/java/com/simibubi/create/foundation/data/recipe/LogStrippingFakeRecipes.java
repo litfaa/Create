@@ -37,7 +37,8 @@ public class LogStrippingFakeRecipes {
 		axe.hideTooltipPart(TooltipPart.MODIFIERS);
 		axe.setHoverName(Lang.translateDirect("recipe.item_application.any_axe")
 			.withStyle(style -> style.withItalic(false)));
-		Registry.ITEM.getTag(ItemTags.LOGS).get()
+		// fabric: tag may not exist yet with JEI, #773
+		Registry.ITEM.getTagOrEmpty(ItemTags.LOGS)
 			.forEach(stack -> process(stack.value(), recipes, axe));
 		return recipes;
 	}

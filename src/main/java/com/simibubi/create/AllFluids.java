@@ -15,10 +15,13 @@ import com.simibubi.create.content.contraptions.fluids.potion.PotionFluid;
 import com.simibubi.create.content.contraptions.fluids.potion.PotionFluid.BottleType;
 import com.simibubi.create.content.contraptions.fluids.potion.PotionFluidHandler;
 import com.simibubi.create.content.palettes.AllPaletteStoneTypes;
+import com.simibubi.create.foundation.fluid.FluidHelper;
+import com.simibubi.create.foundation.utility.Iterate;
 import com.simibubi.create.foundation.utility.NBTHelper;
 import com.tterrag.registrate.fabric.SimpleFlowableFluid;
 import com.tterrag.registrate.util.entry.FluidEntry;
 
+import io.github.fabricators_of_create.porting_lib.event.common.FluidPlaceBlockCallback;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRenderHandler;
@@ -31,6 +34,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.base.EmptyItemFluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.base.FullItemFluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -40,6 +44,7 @@ import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
@@ -129,6 +134,30 @@ public class AllFluids {
 		PotionFluid potionFluid = AllFluids.POTION.get();
 		FluidVariantRendering.register(potionFluid.getFlowing(), handler);
 		FluidVariantRendering.register(potionFluid.getSource(), handler);
+	}
+
+	public static void registerFluidInteractions() {
+		// fabric: no fluid interaction API, use legacy method
+		FluidPlaceBlockCallback.EVENT.register(AllFluids::whenFluidsMeet);
+	}
+
+	public static BlockState whenFluidsMeet(LevelAccessor world, BlockPos pos, BlockState blockState) {
+		FluidState fluidState = blockState.getFluidState();
+
+		if (fluidState.isSource() && FluidHelper.isLava(fluidState.getType()))
+			return null;
+
+		for (Direction direction : Iterate.directions) {
+			FluidState metFluidState =
+					fluidState.isSource() ? fluidState : world.getFluidState(pos.relative(direction));
+			if (!metFluidState.is(FluidTags.WATER))
+				continue;
+			BlockState lavaInteraction = AllFluids.getLavaInteraction(metFluidState);
+			if (lavaInteraction == null)
+				continue;
+			return lavaInteraction;
+		}
+		return null;
 	}
 
 	@Nullable

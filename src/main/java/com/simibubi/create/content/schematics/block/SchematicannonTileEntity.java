@@ -306,7 +306,8 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		ItemStack blueprint = inventory.getStackInSlot(0);
 		blockSkipped = false;
 
-		if (blueprint.isEmpty() && !statusMsg.equals("idle")) {
+		if (blueprint.isEmpty() && !statusMsg.equals("idle") && inventory.getStackInSlot(1)
+			.isEmpty()) {
 			state = State.STOPPED;
 			statusMsg = "idle";
 			sendUpdate = true;
@@ -451,12 +452,23 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		// Load blocks into reader
 		printer.loadSchematic(blueprint, level, true);
 
+		if (printer.isErrored()) {
+			state = State.STOPPED;
+			statusMsg = "schematicErrored";
+			inventory.setStackInSlot(0, ItemStack.EMPTY);
+			inventory.setStackInSlot(1, new ItemStack(AllItems.EMPTY_SCHEMATIC.get()));
+			printer.resetSchematic();
+			sendUpdate = true;
+			return;
+		}
+
 		if (printer.isWorldEmpty()) {
 			state = State.STOPPED;
 			statusMsg = "schematicExpired";
 			inventory.setStackInSlot(0, ItemStack.EMPTY);
 			inventory.setStackInSlot(1, new ItemStack(AllItems.EMPTY_SCHEMATIC.get()));
 			printer.resetSchematic();
+			sendUpdate = true;
 			return;
 		}
 
@@ -465,6 +477,7 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 			state = State.STOPPED;
 			statusMsg = "targetOutsideRange";
 			printer.resetSchematic();
+			sendUpdate = true;
 			return;
 		}
 
@@ -653,6 +666,8 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		paper.setCount(1);
 		boolean outputFull = inventory.getStackInSlot(BookOutput)
 				.getCount() == inventory.getSlotLimit(BookOutput);
+if (printer.isErrored())
+			return;
 
 		if (!printer.isLoaded()) {
 			if (!blueprint.isEmpty())
@@ -790,11 +805,12 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		checklist.damageRequired.clear();
 		checklist.blocksNotLoaded = false;
 
-		if (printer.isLoaded()) {
+		if (printer.isLoaded() && !printer.isErrored()) {
 			blocksToPlace = blocksPlaced;
 			blocksToPlace += printer.markAllBlockRequirements(checklist, level, this::shouldPlace);
 			printer.markAllEntityRequirements(checklist);
 		}
+
 		checklist.gathered.clear();
 		findInventories();
 		for (Storage<ItemVariant> inventory : attachedInventories) {

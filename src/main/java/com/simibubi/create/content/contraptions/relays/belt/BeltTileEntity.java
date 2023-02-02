@@ -168,6 +168,8 @@ public class BeltTileEntity extends KineticTileEntity implements SidedStorageBlo
 	protected void initializeItemHandler() {
 		if (level.isClientSide || itemHandler != null)
 			return;
+		if (beltLength == 0 || controller == null)
+			return;
 		if (!level.isLoaded(controller))
 			return;
 		BlockEntity te = level.getBlockEntity(controller);
@@ -182,6 +184,8 @@ public class BeltTileEntity extends KineticTileEntity implements SidedStorageBlo
 	@Nullable
 	@Override
 	public Storage<ItemVariant> getItemStorage(@Nullable Direction direction) {
+		if (!isRemoved() && itemHandler == null)
+			initializeItemHandler();
 		if (direction == Direction.UP || BeltBlock.canAccessFromSide(direction, getBlockState())) {
 			return itemHandler;
 		}

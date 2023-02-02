@@ -13,10 +13,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.contraptions.components.crafter.MechanicalCrafterTileEntity.Inventory;
 import com.simibubi.create.foundation.utility.Iterate;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
 
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -175,12 +176,13 @@ public class ConnectedInputHandler {
 			data.add(controllerPos.subtract(myPos));
 		}
 
+		@Nullable // fabric: don't create useless ItemStackHandlers
 		public Storage<ItemVariant> getItemHandler(Level world, BlockPos pos) {
 			if (!isController) {
 				BlockPos controllerPos = pos.offset(data.get(0));
 				ConnectedInput input = CrafterHelper.getInput(world, controllerPos);
 				if (input == this || input == null || !input.isController)
-					return new ItemStackHandler();
+					return null;
 				return input.getItemHandler(world, controllerPos);
 			}
 

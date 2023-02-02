@@ -42,6 +42,7 @@ import com.simibubi.create.foundation.utility.VecHelper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResultHolder;
@@ -501,34 +502,17 @@ public class AllArmInteractionPointTypes {
 
 		@Override
 		protected Vec3 getInteractionPositionVector() {
-			Direction facing = FunnelBlock.getFunnelFacing(cachedState);
-			if (facing == null) {
-				logNullFacing();
-				return VecHelper.getCenterOf(pos).add(Vec3.atLowerCornerOf(Vec3i.ZERO).scale(-.15f));
-			}
+			Direction funnelFacing = FunnelBlock.getFunnelFacing(cachedState);
+			Vec3i normal = funnelFacing != null ? funnelFacing.getNormal() : Vec3i.ZERO;
 			return VecHelper.getCenterOf(pos)
-					.add(Vec3.atLowerCornerOf(facing
-							.getNormal())
+				.add(Vec3.atLowerCornerOf(normal)
 					.scale(-.15f));
 		}
 
 		@Override
 		protected Direction getInteractionDirection() {
-			Direction facing = FunnelBlock.getFunnelFacing(cachedState);
-			if (facing == null) {
-				logNullFacing();
-				return Direction.UP;
-			}
-			return facing.getOpposite();
-		}
-
-		public void logNullFacing() {
-			// FIXME SHOULD NEVER BE NULL
-			Create.LOGGER.error("A funnel arm interaction point has an invalid cached blockstate. If you see this message, please report it to Create!");
-			Create.LOGGER.error("https://github.com/Fabricators-of-Create/Create/issues");
-			Create.LOGGER.error("point: [{}] pos: [{}] mode: [{}] level: [{}]", this, this.pos, this.mode, this.level);
-			Create.LOGGER.error("state: [{}] valid: [{}] updated state: [{}]",  cachedState, isValid(), cachedState);
-			new Throwable().printStackTrace();
+			Direction funnelFacing = FunnelBlock.getFunnelFacing(cachedState);
+			return funnelFacing != null ? funnelFacing.getOpposite() : Direction.UP;
 		}
 
 		@Override

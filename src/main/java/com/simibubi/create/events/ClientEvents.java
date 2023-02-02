@@ -443,7 +443,6 @@ public class ClientEvents {
 
 		ClientTickEvents.END_CLIENT_TICK.register(ClientEvents::onTick);
 		ClientTickEvents.START_CLIENT_TICK.register(ClientEvents::onTickStart);
-		ClientTickEvents.END_WORLD_TICK.register(CommonEvents::onWorldTick);
 		ClientWorldEvents.LOAD.register(ClientEvents::onLoadWorld);
 		ClientWorldEvents.UNLOAD.register(ClientEvents::onUnloadWorld);
 		ClientWorldEvents.LOAD.register(CommonEvents::onLoadWorld);

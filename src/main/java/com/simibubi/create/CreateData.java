@@ -7,7 +7,7 @@ import net.minecraftforge.common.data.ExistingFileHelper;
 public class CreateData implements DataGeneratorEntrypoint {
 	@Override
 	public void onInitializeDataGenerator(FabricDataGenerator generator) {
-		ExistingFileHelper helper = ExistingFileHelper.standard();
+		ExistingFileHelper helper = ExistingFileHelper.withResourcesFromArg();
 		Create.REGISTRATE.setupDatagen(generator, helper);
 		Create.gatherData(generator, helper);
 	}

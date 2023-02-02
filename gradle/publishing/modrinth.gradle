@@ -1,0 +1,14 @@
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+    projectId = modrinth_id
+    versionNumber = version
+    versionName = published_version_name
+    versionType = release_type
+    changelog = changelog_text
+    uploadFile = remapJar
+    gameVersions = [ minecraft_version ]
+    loaders = [ "fabric", "quilt" ]
+    dependencies {
+        required.project("fabric-api")
+    }
+}

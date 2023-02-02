@@ -1,14 +1,11 @@
 package com.simibubi.create.content.contraptions.components.structureMovement.mounted;
 
-import java.io.IOException;
 import java.util.List;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.AllMovementBehaviours;
 import com.simibubi.create.content.contraptions.components.actors.PortableStorageInterfaceMovement;
@@ -20,11 +17,11 @@ import com.simibubi.create.content.contraptions.components.structureMovement.Ori
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.config.AllConfigs;
 import com.simibubi.create.foundation.config.ContraptionMovementSetting;
+import com.simibubi.create.foundation.utility.ContraptionData;
 import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.NBTHelper;
 
 import io.github.fabricators_of_create.porting_lib.util.MinecartAndRailUtil;
-import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockSource;
@@ -33,7 +30,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.core.dispenser.DispenseItemBehavior;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -249,18 +246,10 @@ public class MinecartContraptionItem extends Item {
 
 		ItemStack generatedStack = create(type, oce).setHoverName(entity.getCustomName());
 
-		try {
-			ByteArrayDataOutput dataOutput = ByteStreams.newDataOutput();
-			NbtIo.write(NBTSerializer.serializeNBTCompound(generatedStack), dataOutput);
-			int estimatedPacketSize = dataOutput.toByteArray().length;
-			if (estimatedPacketSize > 2_000_000) {
-				player.displayClientMessage(Lang.translateDirect("contraption.minecart_contraption_too_big")
-					.withStyle(ChatFormatting.RED), true);
-				return InteractionResult.PASS;
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (ContraptionData.isTooLargeForPickup(generatedStack.save(new CompoundTag()))) {
+			MutableComponent message = Lang.translateDirect("contraption.minecart_contraption_too_big")
+					.withStyle(ChatFormatting.RED);
+			player.displayClientMessage(message, true);
 			return InteractionResult.PASS;
 		}
 

@@ -72,7 +72,7 @@ public class ManualApplicationRecipe extends ItemApplicationRecipe {
 		recipe.rollResults()
 			.forEach(stack -> Block.popResource(level, pos, stack));
 
-		boolean creative = player.isCreative();
+		boolean creative = player != null && player.isCreative();
 		boolean unbreakable = heldItem.hasTag() && heldItem.getTag()
 			.getBoolean("Unbreakable");
 		boolean keepHeld = recipe.shouldKeepHeldItem() || creative;
