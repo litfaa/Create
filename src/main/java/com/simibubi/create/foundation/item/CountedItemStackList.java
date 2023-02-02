@@ -25,10 +25,17 @@ public class CountedItemStackList {
 	Map<Item, Set<ItemStackEntry>> items = new HashMap<>();
 
 	public CountedItemStackList(Storage<ItemVariant> inventory, FilteringBehaviour filteringBehaviour) {
-		try (Transaction t = TransferUtil.getTransaction()){
-			for (StorageView<ItemVariant> view : inventory.iterable(t)) {
-				if (filteringBehaviour.test(view.getResource().toStack()))
-					add(view.getResource().toStack(ItemHelper.truncateLong(view.getAmount())));
+		try (Transaction t = TransferUtil.getTransaction()) {
+			for (StorageView<ItemVariant> view : TransferUtil.getNonEmpty(inventory, t)) {
+				ItemVariant resource = view.getResource();
+				ItemStack stack = resource.toStack();
+				if (!filteringBehaviour.test(stack))
+					return;
+
+				long amount = view.getAmount();
+				add(stack, amount);
+				// fabric: extract to avoid counting multiple times
+				view.extract(resource, amount, t);
 			}
 		}
 	}
@@ -44,11 +51,12 @@ public class CountedItemStackList {
 				.copy()));
 	}
 
+	// fabric: use add(stack, long) when longs are involved
 	public void add(ItemStack stack) {
 		add(stack, stack.getCount());
 	}
 
-	public void add(ItemStack stack, int amount) {
+	public void add(ItemStack stack, long amount) {
 		if (stack.isEmpty())
 			return;
 

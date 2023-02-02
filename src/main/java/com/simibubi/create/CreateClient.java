@@ -2,6 +2,7 @@ package com.simibubi.create;
 
 import com.jozufozu.flywheel.fabric.event.FlywheelEvents;
 import com.simibubi.create.compat.Mods;
+import com.simibubi.create.compat.sodium.SodiumCompat;
 import com.simibubi.create.compat.trinkets.Trinkets;
 import com.simibubi.create.content.contraptions.base.KineticTileEntityRenderer;
 import com.simibubi.create.content.contraptions.components.structureMovement.glue.SuperGlueSelectionHandler;
@@ -109,9 +110,13 @@ public class CreateClient implements ClientModInitializer {
 		AllPackets.channel.initClientListener();
 		RenderTypes.init();
 		ArmorTextureRegistry.register(AllArmorMaterials.COPPER, CopperArmorItem.TEXTURE);
-		// causes class loading issues or something
-		// noinspection Convert2MethodRef
+		initCompat();
+	}
+
+	@SuppressWarnings("Convert2MethodRef") // may cause class loading issues if changed
+	private static void initCompat() {
 		Mods.TRINKETS.executeIfInstalled(() -> () -> Trinkets.clientInit());
+		Mods.SODIUM.executeIfInstalled(() -> () -> SodiumCompat.init());
 	}
 
 	private static void registerOverlays() {

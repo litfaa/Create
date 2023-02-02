@@ -2,7 +2,6 @@ package com.simibubi.create.content.contraptions.components.crafter;
 
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
-import com.simibubi.create.AllTags;
 import com.simibubi.create.AllTileEntities;
 import com.simibubi.create.content.contraptions.base.HorizontalKineticBlock;
 import com.simibubi.create.content.contraptions.base.KineticTileEntity;
@@ -16,9 +15,9 @@ import com.simibubi.create.foundation.utility.AngleHelper;
 import com.simibubi.create.foundation.utility.Iterate;
 import com.simibubi.create.foundation.utility.Pointing;
 import com.simibubi.create.foundation.utility.VecHelper;
+
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
-
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
@@ -123,7 +122,7 @@ public class MechanicalCrafterBlock extends HorizontalKineticBlock
 				ConnectedInputHandler.toggleConnection(worldIn, pos, otherPos);
 			}
 		}
-		
+
 		super.onRemove(state, worldIn, pos, newState, isMoving);
 	}
 
@@ -193,13 +192,17 @@ public class MechanicalCrafterBlock extends HorizontalKineticBlock
 					return InteractionResult.SUCCESS;
 				}
 
+				if (heldItem.isEmpty()) // fabric: can't insert empty
+					return InteractionResult.PASS;
 				Storage<ItemVariant> capability = crafter.getItemStorage(null);
 				if (capability == null)
 					return InteractionResult.PASS;
 				try (Transaction t = TransferUtil.getTransaction()) {
 					long inserted = capability.insert(ItemVariant.of(heldItem), heldItem.getCount(), t);
-					if (inserted != 0)
-						player.setItemInHand(handIn, ItemHandlerHelper.copyStackWithSize(heldItem, (int) (heldItem.getCount() - inserted)));
+					if (inserted <= 0)
+						return InteractionResult.PASS;
+
+					player.setItemInHand(handIn, ItemHandlerHelper.copyStackWithSize(heldItem, (int) (heldItem.getCount() - inserted)));
 					t.commit();
 					return InteractionResult.SUCCESS;
 				}

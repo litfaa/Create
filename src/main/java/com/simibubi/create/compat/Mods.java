@@ -13,11 +13,17 @@ import net.fabricmc.loader.api.FabricLoader;
 public enum Mods {
 	DYNAMICTREES,
 	TCONSTRUCT,
+	CURIOS,
 	STORAGEDRAWERS,
+	XLPACKETS,
+
+	// fabric mods
 	SANDWICHABLE,
 	TRINKETS,
 	MODMENU,
-	BOTANIA;
+	BOTANIA,
+	SODIUM,
+	INDIUM;
 
 	private final boolean loaded;
 

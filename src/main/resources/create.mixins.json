@@ -13,9 +13,11 @@
     "accessor.FallingBlockEntityAccessor",
     "accessor.GameTestHelperAccessor",
     "accessor.LivingEntityAccessor",
+    "accessor.NbtAccounterAccessor",
     "accessor.ServerLevelAccessor",
     "fabric.AbstractMinecartMixin",
     "fabric.EntityMixin",
+    "fabric.ServerGamePacketListenerImplAccessor",
     "fabric.SortedArraySetAccessor"
   ],
   "client": [

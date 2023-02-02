@@ -12,6 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Multimap;
 import com.simibubi.create.AllSoundEvents;
+import com.simibubi.create.AllTags.AllItemTags;
 import com.simibubi.create.content.contraptions.components.deployer.DeployerTileEntity.Mode;
 import com.simibubi.create.content.contraptions.components.structureMovement.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.components.structureMovement.mounted.CartAssemblerBlockItem;
@@ -181,12 +182,18 @@ public class DeployerHandler {
 							.consumesAction())
 						success = true;
 				}
-				if (!success && stack.isEdible() && entity instanceof Player) {
-					Player playerEntity = (Player) entity;
-					FoodProperties foodProperties = item.getFoodProperties();
-					if (playerEntity.canEat(foodProperties.canAlwaysEat())) {
-						playerEntity.eat(world, stack);
+				if (!success && entity instanceof Player playerEntity) {
+					if (stack.isEdible()) {
+						FoodProperties foodProperties = item.getFoodProperties();
+						if (playerEntity.canEat(foodProperties.canAlwaysEat())) {
+							playerEntity.eat(world, stack);
+							player.spawnedItemEffects = stack.copy();
+							success = true;
+						}
+					}
+					if (AllItemTags.DEPLOYABLE_DRINK.matches(stack)) {
 						player.spawnedItemEffects = stack.copy();
+						player.setItemInHand(hand, stack.finishUsingItem(world, playerEntity));
 						success = true;
 					}
 				}
@@ -230,8 +237,7 @@ public class DeployerHandler {
 			InteractionResult actionResult = UseBlockCallback.EVENT.invoker().interact(player, player.level, player.getUsedItemHand(), result);
 			if (actionResult == InteractionResult.FAIL)
 				return;
-			if (BlockHelper.extinguishFire(world, player, clickedPos, face)) // FIXME: is there an equivalent in world,
-																				// as there was in 1.15?
+			if (BlockHelper.extinguishFire(world, player, clickedPos, face))
 				return;
 //			if (actionResult != InteractionResult.FAIL)
 				clickedState.attack(world, clickedPos, player);
@@ -319,6 +325,8 @@ public class DeployerHandler {
 			return;
 		}
 		if (item == Items.ENDER_PEARL)
+			return;
+		if (AllItemTags.DEPLOYABLE_DRINK.matches(item))
 			return;
 
 		// buckets create their own ray, We use a fake wall to contain the active area

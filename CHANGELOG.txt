@@ -1,0 +1,13 @@
+INFO:
+All changes should be appended to this file with each commit.
+On publish, it will be cleared to prepare for the next release cycle.
+No formatting, just plain text. CurseForge support for it is terrible.
+
+Change logging starts below:
+----------
+- synced with Patches G, H, and I
+- added easy publishing to Modrinth, CurseForge, GitHub Releases, and Maven through a GitHub Action.
+- added easy change logging. Future change logs will be much more thorough.
+- updated AE2 compat recipes
+- fixed error when using mechanical crafters with an empty hand
+- dedicated Sodium compat fixes #695 and replaces NoIndium with a chat message

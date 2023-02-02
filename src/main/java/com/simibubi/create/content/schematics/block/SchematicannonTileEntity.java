@@ -1,6 +1,5 @@
 package com.simibubi.create.content.schematics.block;
 
-import java.awt.Taskbar.State;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,11 +29,10 @@ import com.simibubi.create.foundation.utility.IPartialSafeNBT;
 import com.simibubi.create.foundation.utility.Iterate;
 import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.NBTProcessors;
+
 import io.github.fabricators_of_create.porting_lib.block.CustomRenderBoundingBoxBlockEntity;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.util.LevelUtil;
 import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
-
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -308,7 +306,8 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		ItemStack blueprint = inventory.getStackInSlot(0);
 		blockSkipped = false;
 
-		if (blueprint.isEmpty() && !statusMsg.equals("idle")) {
+		if (blueprint.isEmpty() && !statusMsg.equals("idle") && inventory.getStackInSlot(1)
+			.isEmpty()) {
 			state = State.STOPPED;
 			statusMsg = "idle";
 			sendUpdate = true;
@@ -453,12 +452,23 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		// Load blocks into reader
 		printer.loadSchematic(blueprint, level, true);
 
+		if (printer.isErrored()) {
+			state = State.STOPPED;
+			statusMsg = "schematicErrored";
+			inventory.setStackInSlot(0, ItemStack.EMPTY);
+			inventory.setStackInSlot(1, new ItemStack(AllItems.EMPTY_SCHEMATIC.get()));
+			printer.resetSchematic();
+			sendUpdate = true;
+			return;
+		}
+
 		if (printer.isWorldEmpty()) {
 			state = State.STOPPED;
 			statusMsg = "schematicExpired";
 			inventory.setStackInSlot(0, ItemStack.EMPTY);
 			inventory.setStackInSlot(1, new ItemStack(AllItems.EMPTY_SCHEMATIC.get()));
 			printer.resetSchematic();
+			sendUpdate = true;
 			return;
 		}
 
@@ -467,6 +477,7 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 			state = State.STOPPED;
 			statusMsg = "targetOutsideRange";
 			printer.resetSchematic();
+			sendUpdate = true;
 			return;
 		}
 
@@ -494,8 +505,7 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		if (usage == ItemUseType.DAMAGE) {
 			for (Storage<ItemVariant> iItemHandler : attachedInventories) {
 				try (Transaction t = transaction.openNested()) {
-					for (StorageView<ItemVariant> view : iItemHandler.iterable(t)) {
-						if (view.isResourceBlank()) continue;
+					for (StorageView<ItemVariant> view : TransferUtil.getNonEmpty(iItemHandler, t)) {
 						ItemVariant variant = view.getResource();
 						ItemStack stack = variant.toStack();
 						if (!required.matches(stack))
@@ -656,6 +666,8 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		paper.setCount(1);
 		boolean outputFull = inventory.getStackInSlot(BookOutput)
 				.getCount() == inventory.getSlotLimit(BookOutput);
+if (printer.isErrored())
+			return;
 
 		if (!printer.isLoaded()) {
 			if (!blueprint.isEmpty())
@@ -793,11 +805,12 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		checklist.damageRequired.clear();
 		checklist.blocksNotLoaded = false;
 
-		if (printer.isLoaded()) {
+		if (printer.isLoaded() && !printer.isErrored()) {
 			blocksToPlace = blocksPlaced;
 			blocksToPlace += printer.markAllBlockRequirements(checklist, level, this::shouldPlace);
 			printer.markAllEntityRequirements(checklist);
 		}
+
 		checklist.gathered.clear();
 		findInventories();
 		for (Storage<ItemVariant> inventory : attachedInventories) {

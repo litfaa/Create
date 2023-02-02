@@ -7,12 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemTransferable;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +25,12 @@ import com.simibubi.create.foundation.tileEntity.behaviour.inventory.InvManipula
 import com.simibubi.create.foundation.utility.BlockFace;
 import com.simibubi.create.foundation.utility.Pointing;
 import com.simibubi.create.foundation.utility.VecHelper;
-import io.github.fabricators_of_create.porting_lib.util.LazyOptional;
 
+import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemTransferable;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ItemParticleOption;
@@ -63,7 +61,7 @@ public class MechanicalCrafterTileEntity extends KineticTileEntity implements It
 			this.te = te;
 			forbidExtraction();
 			whenContentsChanged(() -> {
-				if (handler.stacks[0].isEmpty()) // fabric: only has one slot, this is safe
+				if (getStackInSlot(0).isEmpty()) // fabric: only has one slot, this is safe
 					return;
 				if (te.phase == Phase.IDLE)
 					te.checkCompletedRecipe(false);
@@ -76,7 +74,7 @@ public class MechanicalCrafterTileEntity extends KineticTileEntity implements It
 				return 0;
 			if (te.covered)
 				return 0;
-			long inserted = handler.insert(resource, maxAmount, transaction);
+			long inserted = super.insert(resource, maxAmount, transaction);
 			if (inserted != 0)
 				TransactionCallback.onSuccess(transaction, () -> te.getLevel()
 						.playSound(null, te.getBlockPos(), SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, .25f,

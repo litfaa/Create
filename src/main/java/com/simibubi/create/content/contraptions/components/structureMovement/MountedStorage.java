@@ -1,5 +1,7 @@
 package com.simibubi.create.content.contraptions.components.structureMovement;
 
+import java.util.List;
+
 import com.simibubi.create.AllTileEntities;
 import com.simibubi.create.content.contraptions.components.crafter.MechanicalCrafterTileEntity;
 import com.simibubi.create.content.contraptions.processing.ProcessingInventory;
@@ -10,26 +12,18 @@ import com.simibubi.create.foundation.utility.NBTHelper;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
 import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
-
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
-
-import java.util.List;
 
 public class MountedStorage {
 
@@ -72,15 +66,15 @@ public class MountedStorage {
 		if (te == null)
 			return;
 
-		if (te instanceof ChestBlockEntity) {
+		if (te instanceof ChestBlockEntity chest) {
 			CompoundTag tag = te.saveWithFullMetadata();
 			if (tag.contains("LootTable", 8))
 				return;
 
-			handler = new ItemStackHandler(((ChestBlockEntity) te).getContainerSize());
-			NonNullList<ItemStack> items = NonNullList.withSize(handler.getSlots(), ItemStack.EMPTY);
-			ContainerHelper.loadAllItems(tag, items);
-			handler.stacks = items.toArray(ItemStack[]::new);
+			handler = new ItemStackHandler(chest.getContainerSize());
+			for (int i = 0; i < handler.getSlots(); i++) {
+				handler.setStackInSlot(i, chest.getItem(i));
+			}
 			valid = true;
 			return;
 		}
@@ -130,14 +124,12 @@ public class MountedStorage {
 		// FIXME: More dynamic mounted storage in .4
 		if (handler instanceof BottomlessItemHandler)
 			return;
-if (te instanceof ChestBlockEntity) {
-			CompoundTag tag = te.saveWithFullMetadata();
-			tag.remove("Items");
-			NonNullList<ItemStack> items = NonNullList.withSize(handler.getSlots(), ItemStack.EMPTY);
-			for (int i = 0; i < items.size(); i++)
-				items.set(i, handler.getStackInSlot(i));
-			ContainerHelper.saveAllItems(tag, items);
-			te.load(tag);
+
+		if (te instanceof ChestBlockEntity chest) {
+			for (int i = 0; i < chest.getContainerSize(); i++) {
+				ItemStack stack = i < handler.getSlots() ? handler.getStackInSlot(i) : ItemStack.EMPTY;
+				chest.setItem(i, stack);
+			}
 			return;
 		}
 
@@ -149,14 +141,10 @@ if (te instanceof ChestBlockEntity) {
 		Storage<ItemVariant> teHandler = TransferUtil.getItemStorage(te);
 		if (teHandler != null && teHandler.supportsInsertion()) {
 			try (Transaction t = TransferUtil.getTransaction()) {
-				for (StorageView<ItemVariant> view : teHandler.iterable(t)) {
-					// we need to remove whatever is in there to fill with our modified contents
-					if (view.isResourceBlank()) continue;
-					view.extract(view.getResource(), view.getAmount(), t);
-				}
-				for (ItemStack stack : handler.stacks) {
-					if (stack.isEmpty()) continue;
-					teHandler.insert(ItemVariant.of(stack), stack.getCount(), t);
+				// we need to remove whatever is in there to fill with our modified contents
+				TransferUtil.clearStorage(teHandler);
+				for (StorageView<ItemVariant> view : handler.nonEmptyIterable()) {
+					teHandler.insert(view.getResource(), view.getAmount(), t);
 				}
 				t.commit();
 			}

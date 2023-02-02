@@ -2,16 +2,21 @@
 //file:noinspection GrMethodMayBeStatic
 plugins {
     id "fabric-loom" version "1.0.+"
-    id "maven-publish"
+
     id "io.github.juuxel.loom-quiltflower" version "1.+" // Quiltflower, a better decompiler
     id "io.github.p03w.machete" version "1.1.4" // automatic jar compressing on build
+
+    id "com.modrinth.minotaur" version "2.+" // modrinth publishing
+    id "com.matthewprenger.cursegradle" version "1.+" // curseforge publishing
+    id "maven-publish" // maven publishing
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-String buildNumber = System.getenv("GITHUB_RUN_NUMBER")
-version = mod_version + (buildNumber != null ? "-${buildNumber}" : "") + "+${project.minecraft_version}"
+String runNumber = System.getenv("GITHUB_RUN_NUMBER")
+String build = runNumber != null ? runNumber : "local"
+version = "$mod_version-$build+$minecraft_version"
 
 group = project.maven_group
 archivesBaseName = "create-fabric"
@@ -74,7 +79,6 @@ def dependencies(DependencyHandler deps) {
     deps.modImplementation(deps.include("com.jozufozu.flywheel:flywheel-fabric-${flywheel_minecraft_version}:${project.flywheel_version}"))
     deps.modImplementation(deps.include("com.jamieswhiteshirt:reach-entity-attributes:${project.reach_entity_attributes_version}"))
     deps.modImplementation(deps.include("io.github.tropheusj:milk-lib:${project.milk_lib_version}"))
-    deps.modImplementation(deps.include("me.luligabi:NoIndium:${project.no_indium_version}"))
     deps.implementation(deps.include("com.google.code.findbugs:jsr305:${project.jsr305_version}"))
 }
 
@@ -93,18 +97,18 @@ def setup(DependencyHandler deps) {
 def devEnv(DependencyHandler deps) {
     deps.modLocalRuntime("maven.modrinth:lazydfu:0.1.2")
     deps.modLocalRuntime("maven.modrinth:lithium:mc1.18.2-0.7.9")
-    // used to prevent forge config api port from complaining
-    deps.modImplementation("com.github.AlphaMode:fakeconfig:master-SNAPSHOT") { exclude(group: "net.fabricmc.fabric-api") }
-    deps.modImplementation("com.github.AlphaMode:fakeconfigtoml:master-SNAPSHOT") { exclude(group: "net.fabricmc.fabric-api") }
+    deps.modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}")
+    deps.modLocalRuntime("dev.emi:trinkets:${project.trinkets_version}")
 }
 
 // setup mods that are available for compatibility reasons
 def compat(DependencyHandler deps) {
     recipeViewers(deps)
-    deps.modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}")
     deps.modCompileOnly("maven.modrinth:sandwichable:1.2+1.18.2")
-    deps.modImplementation("dev.emi:trinkets:${project.trinkets_version}") { exclude(group: "com.terraformersmc") }
+    deps.modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}")
+    deps.modCompileOnly("dev.emi:trinkets:${project.trinkets_version}") { exclude(group: "com.terraformersmc") }
     deps.modCompileOnly("vazkii.botania:Botania:${project.botania_version}") { transitive = false }
+    deps.modCompileOnly("maven.modrinth:sodium:${project.sodium_version}")
 }
 
 // setup the three recipe viewer mods
@@ -176,7 +180,7 @@ def testMods(DependencyHandler deps) {
 }
 
 machete {
-    if (buildNumber == null) {
+    if (runNumber == null) {
         enabled = false // don't optimize local builds
     }
 }
@@ -212,6 +216,11 @@ loom {
             vmArg "-Dfabric-api.datagen"
             vmArg "-Dfabric-api.datagen.output-dir=${file("src/generated/resources")}"
             vmArg "-Dfabric-api.datagen.modid=create"
+            vmArg "-Dporting_lib.datagen.existing_resources=${file("src/main/resources")}"
+        }
+
+        server {
+            runDir "run/server"
         }
     }
 }
@@ -224,16 +233,6 @@ processResources {
     properties.put("loader_version", project.loader_version)
     properties.put("fabric_version", project.fabric_version)
     properties.put("minecraft_version", project.minecraft_version)
-    properties.put("java_version", sourceCompatibility)
-    properties.put("registrate_version", project.registrate_version)
-    properties.put("flywheel_version", project.flywheel_version)
-    properties.put("port_lib_version", "${project.port_lib_version}+${project.minecraft_version}")
-    properties.put("forge_tags_version", project.forge_tags_version)
-    properties.put("forge_config_api_port_version", project.forge_config_api_port_version)
-    properties.put("reach_entity_attributes_version", project.reach_entity_attributes_version)
-    properties.put("milk_lib_version", project.milk_lib_version)
-    properties.put("night_config_core_version", project.night_config_core_version)
-    properties.put("night_config_toml_version", project.night_config_toml_version)
 
     properties.forEach((k, v) -> inputs.property(k, v))
 
@@ -262,22 +261,5 @@ jar {
     }
 }
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId = archivesBaseName + "-${project.minecraft_version}"
-            from components.java
-        }
-    }
-
-    repositories {
-        maven {
-            url = "https://mvn.devos.one/${System.getenv().PUBLISH_SUFFIX}/"
-            credentials {
-                username = System.getenv().MAVEN_USER
-                password = System.getenv().MAVEN_PASS
-            }
-            authentication { basic(BasicAuthentication) }
-        }
-    }
-}
+// see gradle/publishing.gradle for publishing
+apply from: "gradle/publishing/publishing.gradle"
