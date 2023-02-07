@@ -10,6 +10,7 @@ import com.simibubi.create.foundation.tileEntity.IMergeableTE;
 
 import io.github.fabricators_of_create.porting_lib.util.LevelUtil;
 import io.github.fabricators_of_create.porting_lib.util.PlantUtil;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
@@ -165,24 +166,26 @@ public class BlockHelper {
 		BlockEntity tileentity = state.hasBlockEntity() ? world.getBlockEntity(pos) : null;
 
 		if (player != null) {
-//			BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(world, pos, state, player);
-//			MinecraftForge.EVENT_BUS.post(event);
-//			if (event.isCanceled())
-//				return;
-//
-//			if (event.getExpToDrop() > 0 && world instanceof ServerLevel)
-//				state.getBlock()
-//					.popExperience((ServerLevel) world, pos, event.getExpToDrop());
+			boolean allowed = PlayerBlockBreakEvents.BEFORE.invoker().beforeBlockBreak(world, player, pos, state, tileentity);
+			if (!allowed) {
+				PlayerBlockBreakEvents.CANCELED.invoker().onBlockBreakCanceled(world, player, pos, state, tileentity);
+				return;
+			}
+
+			// fabric: exp handed in state.spawnAfterBreak
 
 			usedTool.mineBlock(world, state, pos, player);
 			player.awardStat(Stats.BLOCK_MINED.get(state.getBlock()));
 		}
 
 		if (world instanceof ServerLevel && world.getGameRules()
-			.getBoolean(GameRules.RULE_DOBLOCKDROPS)// && !world.restoringBlockSnapshots
+			.getBoolean(GameRules.RULE_DOBLOCKDROPS)
 			&& (player == null || !player.isCreative())) {
-			for (ItemStack itemStack : Block.getDrops(state, (ServerLevel) world, pos, tileentity, player, usedTool))
+			for (ItemStack itemStack : Block.getDrops(state, (ServerLevel) world, pos, tileentity, player, usedTool)) {
+				if (itemStack.isEmpty())
+					continue;
 				droppedItemCallback.accept(itemStack);
+			}
 
 			// Simulating IceBlock#playerDestroy. Not calling method directly as it would drop item
 			// entities as a side-effect
@@ -194,8 +197,10 @@ public class BlockHelper {
 
 				Material material = world.getBlockState(pos.below())
 					.getMaterial();
-				if (material.blocksMotion() || material.isLiquid())
+				if (material.blocksMotion() || material.isLiquid()) {
 					world.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+					afterBreak(world, player, pos, state, tileentity);
+				}
 				return;
 			}
 
@@ -203,6 +208,13 @@ public class BlockHelper {
 		}
 
 		world.setBlockAndUpdate(pos, fluidState.createLegacyBlock());
+		afterBreak(world, player, pos, state, tileentity);
+	}
+
+	// fabric: after break event
+	private static void afterBreak(Level level, @Nullable Player player, BlockPos pos, BlockState state, @Nullable BlockEntity be) {
+		if (player != null)
+			PlayerBlockBreakEvents.AFTER.invoker().afterBlockBreak(level, player, pos, state, be);
 	}
 
 	public static boolean isSolidWall(BlockGetter reader, BlockPos fromPos, Direction toDirection) {

@@ -4,19 +4,16 @@ import com.simibubi.create.api.behaviour.BlockSpoutingBehaviour;
 import com.simibubi.create.compat.Mods;
 import com.simibubi.create.content.contraptions.fluids.actors.SpoutTileEntity;
 import com.simibubi.create.foundation.config.AllConfigs;
-import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.utility.RegisteredObjects;
 
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -38,12 +35,12 @@ public class SpoutCasting extends BlockSpoutingBehaviour {
 		if (te == null)
 			return 0;
 
-		Storage<FluidVariant> handler = TransferUtil.getFluidStorage(te, Direction.UP);
-		if (handler == null)
-			return 0;
-
 		ResourceLocation registryName = RegisteredObjects.getKeyOrThrow(te.getType());
 		if (!registryName.equals(TABLE) && !registryName.equals(BASIN))
+			return 0;
+
+		Storage<FluidVariant> handler = TransferUtil.getFluidStorage(level, pos, te, Direction.UP);
+		if (handler == null)
 			return 0;
 
 		// Do not fill if it would only partially fill the table (unless > 1000mb)

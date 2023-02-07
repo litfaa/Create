@@ -7,23 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.simibubi.create.content.contraptions.relays.belt.BeltTileEntity;
-
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemTransferable;
-import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-
-import net.minecraft.world.level.Level;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import com.jozufozu.flywheel.backend.instancing.InstancedRenderDispatcher;
-import com.simibubi.create.AllBlocks;
+import com.simibubi.create.content.contraptions.relays.belt.BeltTileEntity;
 import com.simibubi.create.content.logistics.block.belts.tunnel.BeltTunnelBlock.Shape;
 import com.simibubi.create.content.logistics.block.funnel.BeltFunnelBlock;
 import com.simibubi.create.content.logistics.packet.TunnelFlapPacket;
@@ -35,7 +23,11 @@ import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat.Chaser;
 import com.tterrag.registrate.fabric.EnvExecutor;
 
+import io.github.fabricators_of_create.porting_lib.transfer.StorageProvider;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemTransferable;
 import net.fabricmc.api.EnvType;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -45,6 +37,7 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -54,7 +47,7 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements ItemTransfe
 	public Map<Direction, LerpedFloat> flaps;
 	public Set<Direction> sides;
 
-	protected BlockApiCache<Storage<ItemVariant>, Direction> belowStorageCache;
+	protected StorageProvider<ItemVariant> belowProvider;
 	protected List<Pair<Direction, Boolean>> flapsToSend;
 
 	public BeltTunnelTileEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -67,7 +60,7 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements ItemTransfe
 	@Override
 	public void setLevel(Level level) {
 		super.setLevel(level);
-		belowStorageCache = TransferUtil.getItemCache(level, worldPosition.below());
+		belowProvider = StorageProvider.createForItems(level, worldPosition.below());
 	}
 
 	@Override
@@ -204,9 +197,10 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements ItemTransfe
 
 	@Override
 	public Storage<ItemVariant> getItemStorage(@Nullable Direction face) {
-		if (belowStorageCache != null && belowStorageCache.getBlockEntity() instanceof BeltTileEntity) {
-			return belowStorageCache.find(Direction.UP);
-		}
+		if (belowProvider == null)
+			return null;
+		if (belowProvider.findBlockEntity() instanceof BeltTileEntity)
+			return belowProvider.get(Direction.UP);
 		return null;
 	}
 }

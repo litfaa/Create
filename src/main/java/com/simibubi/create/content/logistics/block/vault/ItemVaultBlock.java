@@ -12,7 +12,6 @@ import com.simibubi.create.foundation.block.ITE;
 import com.simibubi.create.foundation.item.ItemHelper;
 
 import io.github.fabricators_of_create.porting_lib.block.CustomSoundTypeBlock;
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -168,7 +167,7 @@ public class ItemVaultBlock extends Block implements IWrenchable, ITE<ItemVaultT
 	public int getAnalogOutputSignal(BlockState pState, Level pLevel, BlockPos pPos) {
 		return getTileEntityOptional(pLevel, pPos)
 			.filter(vte -> !Transaction.isOpen()) // fabric: hack fix for comparators updating when they shouldn't
-			.map(TransferUtil::getItemStorage)
+			.map(vte -> vte.getItemStorage(null))
 			.map(ItemHelper::calcRedstoneFromInventory)
 			.orElse(0);
 	}

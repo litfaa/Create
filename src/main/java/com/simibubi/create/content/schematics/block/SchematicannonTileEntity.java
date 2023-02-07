@@ -1,8 +1,10 @@
 package com.simibubi.create.content.schematics.block;
 
-import java.util.LinkedHashSet;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nullable;
 
@@ -21,8 +23,6 @@ import com.simibubi.create.content.schematics.MaterialChecklist;
 import com.simibubi.create.content.schematics.SchematicPrinter;
 import com.simibubi.create.foundation.config.AllConfigs;
 import com.simibubi.create.foundation.config.CSchematics;
-import com.simibubi.create.foundation.item.ItemHelper;
-import com.simibubi.create.foundation.item.ItemHelper.ExtractionCountMode;
 import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
 import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
 import com.simibubi.create.foundation.utility.IPartialSafeNBT;
@@ -31,13 +31,14 @@ import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.NBTProcessors;
 
 import io.github.fabricators_of_create.porting_lib.block.CustomRenderBoundingBoxBlockEntity;
+import io.github.fabricators_of_create.porting_lib.transfer.StorageProvider;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.BlockPos;
@@ -57,6 +58,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -90,7 +92,6 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 	private boolean blockSkipped;
 
 	public BlockPos previousTarget;
-	public LinkedHashSet<Storage<ItemVariant>> attachedInventories;
 	public List<LaunchedItem> flyingBlocks;
 	public MaterialChecklist checklist;
 
@@ -112,10 +113,12 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 	public boolean firstRenderTick;
 	public float defaultYaw;
 
+	// fabric: transfer
+	private final Map<Direction, StorageProvider<ItemVariant>> storages = new HashMap<>();
+
 	public SchematicannonTileEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
 		super(type, pos, state);
 		setLazyTickRate(30);
-		attachedInventories = new LinkedHashSet<>();
 		flyingBlocks = new LinkedList<>();
 		inventory = new SchematicannonInventory(this);
 		statusMsg = "idle";
@@ -125,24 +128,28 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		printer = new SchematicPrinter();
 	}
 
+	@Override
+	public void setLevel(Level level) {
+		super.setLevel(level);
+		for (Direction direction : Iterate.directions) {
+			BlockPos pos = worldPosition.relative(direction);
+			StorageProvider<ItemVariant> provider = StorageProvider.createForItems(level, pos);
+			storages.put(direction, provider);
+		}
+	}
+
+	// fabric: storages not stored, only check for creative crate
 	public void findInventories() {
 		hasCreativeCrate = false;
-		attachedInventories.clear();
-		for (Direction facing : Iterate.directions) {
 
-			if (!level.isLoaded(worldPosition.relative(facing)))
+		for (Direction facing : Iterate.directions) {
+			BlockPos pos = worldPosition.relative(facing);
+
+			if (!level.isLoaded(pos))
 				continue;
 
-			if (AllBlocks.CREATIVE_CRATE.has(level.getBlockState(worldPosition.relative(facing))))
+			if (AllBlocks.CREATIVE_CRATE.has(level.getBlockState(pos)))
 				hasCreativeCrate = true;
-
-			BlockEntity tileEntity = level.getBlockEntity(worldPosition.relative(facing));
-			if (tileEntity != null) {
-				Storage<ItemVariant> storage = TransferUtil.getItemStorage(tileEntity, facing.getOpposite());
-				if (storage != null && storage.supportsExtraction()) {
-					attachedInventories.add(storage);
-				}
-			}
 		}
 	}
 
@@ -497,59 +504,62 @@ public class SchematicannonTileEntity extends SmartTileEntity implements MenuPro
 		if (hasCreativeCrate)
 			return true;
 
-//		attachedInventories.removeIf(cap -> !cap.isPresent()); // fabric - already cleared on neighbor update, not needed?
-
+		ItemStack stack = required.stack;
 		ItemUseType usage = required.usage;
 
 		// Find and apply damage
+		// fabric - can't modify directly, extract and re-insert
 		if (usage == ItemUseType.DAMAGE) {
-			for (Storage<ItemVariant> iItemHandler : attachedInventories) {
+			if (!stack.isDamageableItem())
+				return false;
+
+			for (Entry<Direction, StorageProvider<ItemVariant>> entry : storages.entrySet()) {
+				Storage<ItemVariant> storage = entry.getValue().get(entry.getKey().getOpposite());
+				if (storage == null)
+					continue;
 				try (Transaction t = transaction.openNested()) {
-					for (StorageView<ItemVariant> view : TransferUtil.getNonEmpty(iItemHandler, t)) {
-						ItemVariant variant = view.getResource();
-						ItemStack stack = variant.toStack();
-						if (!required.matches(stack))
-							continue;
-						if (!stack.isDamageableItem())
-							continue;
-
-						// fabric - can't modify directly, extract and re-insert
-						if (iItemHandler.extract(variant, 1, t) == 1) {
-							stack.setDamageValue(stack.getDamageValue() + 1);
-							if (stack.getDamageValue() <= stack.getMaxDamage()) {
-								if (iItemHandler.insert(variant, 1, t) == 1)
-									t.commit();
-							}
-						}
-
-						return true;
+					ResourceAmount<ItemVariant> resource = TransferUtil.extractMatching(storage, required::matches, 1, t);
+					if (resource == null || resource.amount() != 1)
+						continue; // failed, skip
+					ItemVariant variant = resource.resource();
+					ItemStack newStack = variant.toStack();
+					newStack.setDamageValue(newStack.getDamageValue() + 1);
+					if (stack.getDamageValue() < stack.getMaxDamage()) {
+						// stack not broken, re-insert
+						ItemVariant newVariant = ItemVariant.of(newStack);
+						long inserted = storage.insert(newVariant, 1, t);
+						if (inserted != 1)
+							continue; // failed to re-insert, cancel this whole attempt
 					}
+					t.commit();
+					return true;
 				}
 			}
-
+			// could not find in any storage
 			return false;
 		}
 
 		// Find and remove
-		boolean success = false;
-		long amountFound = 0;
+		int toExtract = stack.getCount();
 		try (Transaction t = transaction.openNested()) {
-			for (Storage<ItemVariant> iItemHandler : attachedInventories) {
-				amountFound += ItemHelper
-						.extract(iItemHandler, required::matches, ExtractionCountMode.UPTO,
-								required.stack.getCount(), false)
-						.getCount();
-
-				if (amountFound < required.stack.getCount())
+			for (Entry<Direction, StorageProvider<ItemVariant>> entry : storages.entrySet()) {
+				Storage<ItemVariant> storage = entry.getValue().get(entry.getKey().getOpposite());
+				if (storage == null)
 					continue;
 
-				success = true;
-				break;
+				ResourceAmount<ItemVariant> resource = TransferUtil.extractMatching(storage, required::matches, stack.getCount(), t);
+				if (resource == null)
+					continue;
+				toExtract -= resource.amount();
+				if (toExtract > 0) // still need to extract more
+					continue;
+				// extracted enough
+				t.commit();
+				return true;
 			}
-			if (success) t.commit();
 		}
-
-		return success;
+		// if we get here we didn't find enough
+		return false;
 	}
 
 	public void finishedPrinting() {
@@ -812,10 +822,13 @@ if (printer.isErrored())
 		}
 
 		checklist.gathered.clear();
-		findInventories();
-		for (Storage<ItemVariant> inventory : attachedInventories) {
-			List<ItemStack> contents = TransferUtil.getAllItems(inventory);
-			contents.forEach(checklist::collect);
+		try (Transaction t = TransferUtil.getTransaction()) {
+			for (Entry<Direction, StorageProvider<ItemVariant>> entry : storages.entrySet()) {
+				Storage<ItemVariant> storage = entry.getValue().get(entry.getKey().getOpposite());
+				if (storage == null)
+					continue;
+				TransferUtil.getNonEmpty(storage, t).forEach(checklist::collect);
+			}
 		}
 		sendUpdate = true;
 	}

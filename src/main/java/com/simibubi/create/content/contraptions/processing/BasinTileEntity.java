@@ -2,8 +2,10 @@ package com.simibubi.create.content.contraptions.processing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -38,11 +40,13 @@ import com.simibubi.create.foundation.utility.VecHelper;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat.Chaser;
 
+import io.github.fabricators_of_create.porting_lib.transfer.StorageProvider;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.transfer.fluid.FluidTransferable;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemTransferable;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
 import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
+import it.unimi.dsi.fastutil.Pair;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -63,6 +67,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -98,6 +103,10 @@ public class BasinTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 	public static final int OUTPUT_ANIMATION_TIME = 10;
 	List<LongAttached<ItemStack>> visualizedOutputItems;
 	List<LongAttached<FluidStack>> visualizedOutputFluids;
+
+	// fabric: transfer things
+
+	private final Map<Direction, Pair<StorageProvider<ItemVariant>, StorageProvider<FluidVariant>>> spoutputOutputs = new HashMap<>();
 
 	SnapshotParticipant<Data> snapshotParticipant = new SnapshotParticipant<>() {
 		@Override
@@ -138,6 +147,28 @@ public class BasinTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 		spoutputBuffer = new ArrayList<>();
 		spoutputFluidBuffer = new ArrayList<>();
 		recipeBackupCheck = 20;
+	}
+
+	@Override
+	public void setLevel(Level level) {
+		super.setLevel(level);
+		spoutputOutputs.clear();
+		for (Direction direction : Iterate.horizontalDirections) {
+			BlockPos pos = getBlockPos().below().relative(direction);
+			StorageProvider<ItemVariant> items = StorageProvider.createForItems(level, pos);
+			StorageProvider<FluidVariant> fluids = StorageProvider.createForFluids(level, pos);
+			spoutputOutputs.put(direction, Pair.of(items, fluids));
+		}
+	}
+
+	public Storage<ItemVariant> getItemSpoutputOutput(Direction facing) {
+		Pair<StorageProvider<ItemVariant>, StorageProvider<FluidVariant>> providers = spoutputOutputs.get(facing);
+		return providers == null ? null : providers.first().get(facing.getOpposite());
+	}
+
+	public Storage<FluidVariant> getFluidSpoutputOutput(Direction facing) {
+		Pair<StorageProvider<ItemVariant>, StorageProvider<FluidVariant>> providers = spoutputOutputs.get(facing);
+		return providers == null ? null : providers.second().get(facing.getOpposite());
 	}
 
 	@Override
@@ -388,12 +419,10 @@ public class BasinTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 			inserter = TileEntityBehaviour.get(level, te.getBlockPos(), InvManipulationBehaviour.TYPE);
 		}
 
-		Storage<ItemVariant> targetInv = te == null ? null
-				: TransferUtil.getItemStorage(te, direction.getOpposite());
+		Storage<ItemVariant> targetInv = getItemSpoutputOutput(direction);
 		if (targetInv == null && inserter != null) targetInv = inserter.getInventory();
 
-		Storage<FluidVariant> targetTank = te == null ? null
-			: TransferUtil.getFluidStorage(te, direction.getOpposite());
+		Storage<FluidVariant> targetTank = getFluidSpoutputOutput(direction);
 
 		boolean update = false;
 
@@ -539,11 +568,9 @@ public class BasinTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 
 			InvManipulationBehaviour inserter =
 					te == null ? null : TileEntityBehaviour.get(level, te.getBlockPos(), InvManipulationBehaviour.TYPE);
-			Storage<ItemVariant> targetInv = te == null ? null
-					: TransferUtil.getItemStorage(te, direction.getOpposite());
+			Storage<ItemVariant> targetInv = getItemSpoutputOutput(direction);
 			if (targetInv == null && inserter != null) targetInv = inserter.getInventory();
-			Storage<FluidVariant> targetTank = te == null ? null
-					: TransferUtil.getFluidStorage(te, direction.getOpposite());
+			Storage<FluidVariant> targetTank = getFluidSpoutputOutput(direction);
 			boolean externalTankNotPresent = targetTank == null;
 
 			if (!outputItems.isEmpty() && targetInv == null)

@@ -3,7 +3,12 @@ package com.simibubi.create.content.contraptions.processing;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
+import org.jetbrains.annotations.Nullable;
+
+import com.google.common.collect.AbstractIterator;
+
 import io.github.fabricators_of_create.porting_lib.transfer.ViewOnlyWrappedIterator;
+import io.github.fabricators_of_create.porting_lib.transfer.ViewOnlyWrappedStorageView;
 import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandlerContainer;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -39,13 +44,6 @@ public class ProcessingInventory extends ItemStackHandlerContainer {
 		remainingTime = 0;
 		recipeDuration = 0;
 		appliedRecipe = false;
-	}
-
-	public boolean isEmpty() {
-		for (int i = 0; i < getSlots(); i++)
-			if (!getStackInSlot(i).isEmpty())
-				return false;
-		return true;
 	}
 
 	@Override
@@ -87,7 +85,21 @@ public class ProcessingInventory extends ItemStackHandlerContainer {
 
 	@Override
 	public Iterator<StorageView<ItemVariant>> iterator(TransactionContext transaction) {
-		Iterator<StorageView<ItemVariant>> base = super.iterator(transaction);
-		return new ViewOnlyWrappedIterator<>(base);
+		return new ViewOnlyWrappedIterator<>(super.iterator(transaction));
+	}
+
+	@Override
+	public Iterator<? extends StorageView<ItemVariant>> nonEmptyViews() {
+		Iterator<? extends StorageView<ItemVariant>> original = super.nonEmptyViews();
+		return new AbstractIterator<>() {
+			@Nullable
+			@Override
+			protected StorageView<ItemVariant> computeNext() {
+				if (!original.hasNext())
+					return endOfData();
+				StorageView<ItemVariant> next = original.next();
+				return new ViewOnlyWrappedStorageView<>(next);
+			}
+		};
 	}
 }

@@ -1,13 +1,16 @@
 INFO:
 All changes should be appended to this file with each commit.
-On publish, it will be cleared to prepare for the next release cycle.
+On publish, it should be cleared to prepare for the next release cycle.
 No formatting, just plain text. CurseForge support for it is terrible.
 
 Change logging starts below:
 ----------
-- synced with Patches G, H, and I
-- added easy publishing to Modrinth, CurseForge, GitHub Releases, and Maven through a GitHub Action.
-- added easy change logging. Future change logs will be much more thorough.
-- updated AE2 compat recipes
-- fixed error when using mechanical crafters with an empty hand
-- dedicated Sodium compat fixes #695 and replaces NoIndium with a chat message
+- fix extraction from crushing wheels
+- fix crashes with contraptions breaking blocks
+- implement PlayerBlockBreakEvents into BlockHelper#destroyBlockAs
+- fix crashes with mechanical arms and many more things (#795)
+- fix toolbox return erroring (#794)
+- fix alt sometimes getting stuck when closing toolbox menu
+- fix Sequenced Gearshifts getting powered too easily (#791)
+- refactor transfer in many places to improve compat and code quality (related: #496)
+- fix transfer in Ponder

@@ -101,9 +101,7 @@ public class HarvesterMovementBehaviour implements MovementBehaviour {
 				stack.shrink(1);
 				seedSubtracted.setTrue();
 			}
-			// fabric: empty stacks cause crashes
-			if (!stack.isEmpty())
-				dropItem(context, stack);
+			dropItem(context, stack);
 		});
 
 		BlockState cutCrop = cutCrop(world, pos, stateVisited);

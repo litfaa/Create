@@ -2,17 +2,26 @@ package com.simibubi.create.foundation.tileEntity.behaviour.inventory;
 
 import java.util.function.Predicate;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.google.common.base.Predicates;
 import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
 import com.simibubi.create.foundation.tileEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.tileEntity.behaviour.filtering.FilteringBehaviour;
+import com.simibubi.create.foundation.utility.BlockFace;
 
+import io.github.fabricators_of_create.porting_lib.transfer.StorageProvider;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
+import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 
 public class TankManipulationBehaviour extends CapManipulationBehaviourBase<FluidVariant, TankManipulationBehaviour> {
 
@@ -62,8 +71,13 @@ public class TankManipulationBehaviour extends CapManipulationBehaviourBase<Flui
 	}
 
 	@Override
-	protected Class<FluidVariant> capability() {
-		return FluidVariant.class;
+	protected StorageProvider<FluidVariant> getProvider(BlockFace face) {
+		return StorageProvider.createForFluids(getWorld(), face.getPos());
+	}
+
+	@Override
+	protected UnsidedStorageProvider<FluidVariant> getUnsidedProvider(BlockPos pos) {
+		return new UnsidedFluidStorageProvider(FluidStorage.SIDED, getWorld(), pos);
 	}
 
 	@Override
@@ -71,4 +85,15 @@ public class TankManipulationBehaviour extends CapManipulationBehaviourBase<Flui
 		return behaviourType;
 	}
 
+	public static class UnsidedFluidStorageProvider extends UnsidedStorageProvider<FluidVariant> {
+		protected UnsidedFluidStorageProvider(BlockApiLookup<Storage<FluidVariant>, Direction> lookup, Level level, BlockPos pos) {
+			super(lookup, level, pos);
+		}
+
+		@Nullable
+		@Override
+		public Storage<FluidVariant> get() {
+			return TransferUtil.getFluidStorage(level, pos);
+		}
+	}
 }

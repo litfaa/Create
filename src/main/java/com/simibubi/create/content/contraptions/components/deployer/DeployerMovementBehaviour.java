@@ -5,14 +5,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.simibubi.create.foundation.utility.VecHelper;
-
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-
-import net.minecraft.core.Direction.Axis;
-
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.jozufozu.flywheel.api.MaterialManager;
@@ -37,14 +29,20 @@ import com.simibubi.create.content.schematics.SchematicWorld;
 import com.simibubi.create.content.schematics.filtering.SchematicInstances;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.item.ItemHelper;
-import com.simibubi.create.foundation.item.ItemHelper.ExtractionCountMode;
 import com.simibubi.create.foundation.utility.BlockHelper;
 import com.simibubi.create.foundation.utility.NBTHelper;
 import com.simibubi.create.foundation.utility.NBTProcessors;
-import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
+import com.simibubi.create.foundation.utility.VecHelper;
 
+import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import io.github.fabricators_of_create.porting_lib.util.NBTSerializer;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction.Axis;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -145,17 +143,16 @@ public class DeployerMovementBehaviour implements MovementBehaviour {
 
 		if (!context.contraption.hasUniversalCreativeCrate) {
 			Storage<ItemVariant> iItemHandler = context.contraption.getSharedInventory();
-			for (ItemRequirement.StackRequirement required : requiredItems) {
-				ItemStack stack= ItemHelper
-					.extract(iItemHandler, required::matches, ExtractionCountMode.EXACTLY,
-						required.stack.getCount(), true)
-					;
-				if (stack.isEmpty())
-					return;
+			try (Transaction t = TransferUtil.getTransaction()) {
+				for (ItemRequirement.StackRequirement required : requiredItems) {
+					int count = required.stack.getCount();
+					ResourceAmount<ItemVariant> resource = TransferUtil.extractMatching(iItemHandler, required::matches, count, t);
+					if (resource == null || resource.amount() != count)
+						return; // didn't extract what we needed, skip
+				}
+				// if we get here all requirements were met
+				t.commit();
 			}
-			for (ItemRequirement.StackRequirement required : requiredItems)
-				contextStack = ItemHelper.extract(iItemHandler, required::matches,
-					ExtractionCountMode.EXACTLY, required.stack.getCount(), false);
 		}
 
 		CompoundTag data = null;

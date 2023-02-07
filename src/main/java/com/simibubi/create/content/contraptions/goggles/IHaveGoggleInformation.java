@@ -11,14 +11,12 @@ import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
 import io.github.fabricators_of_create.porting_lib.util.FluidTextUtil;
 import io.github.fabricators_of_create.porting_lib.util.FluidUnit;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 
 /*
 * Implement this Interface in the TileEntity class that wants to add info to the screen
@@ -48,6 +46,8 @@ public interface IHaveGoggleInformation {
 	}
 
 	default boolean containedFluidTooltip(List<Component> tooltip, boolean isPlayerSneaking, Storage<FluidVariant> handler) {
+		if (handler == null)
+			return false;
 		FluidUnit unit = AllConfigs.CLIENT.fluidUnitType.get();
 		boolean simplify = AllConfigs.CLIENT.simplifyFluidUnit.get();
 		LangBuilder mb = Lang.translate(unit.getTranslationKey());

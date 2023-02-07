@@ -8,6 +8,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllFluids;
 import com.simibubi.create.AllItems;
+import com.simibubi.create.AllKeys;
 import com.simibubi.create.AllParticleTypes;
 import com.simibubi.create.Create;
 import com.simibubi.create.CreateClient;
@@ -192,6 +193,8 @@ public class ClientEvents {
 		CameraDistanceModifier.tick();
 		CameraAngleAnimationService.tick();
 		TrainHUD.tick();
+		// fabric: see comment
+		AllKeys.fixBinds();
 	}
 
 	public static void onJoin(ClientPacketListener handler, PacketSender sender, Minecraft client) {

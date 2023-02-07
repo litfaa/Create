@@ -10,8 +10,11 @@ import com.simibubi.create.content.schematics.ItemRequirement.ItemUseType;
 import com.simibubi.create.foundation.utility.Components;
 import com.simibubi.create.foundation.utility.Lang;
 
+import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -68,6 +71,14 @@ public class MaterialChecklist {
 				gathered.put(item, gathered.getInt(item) + stack.getCount());
 			else
 				gathered.put(item, stack.getCount());
+	}
+
+	public void collect(StorageView<ItemVariant> view) {
+		if (view.isResourceBlank())
+			return;
+		int amount = TransferUtil.truncateLong(view.getAmount());
+		ItemStack stack = view.getResource().toStack(amount);
+		collect(stack);
 	}
 
 	public ItemStack createItem() {

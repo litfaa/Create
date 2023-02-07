@@ -14,9 +14,9 @@ import com.simibubi.create.foundation.tileEntity.behaviour.belt.TransportedItemS
 import com.simibubi.create.foundation.tileEntity.behaviour.filtering.FilteringBehaviour;
 import com.simibubi.create.foundation.tileEntity.behaviour.inventory.InvManipulationBehaviour;
 import com.simibubi.create.foundation.utility.Iterate;
+
 import io.github.fabricators_of_create.porting_lib.block.ConnectableRedstoneBlock;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -72,10 +72,8 @@ public class ContentObserverBlock extends HorizontalDirectionalBlock implements 
 				canDetect = true;
 			else if (TileEntityBehaviour.get(tileEntity, FluidTransportBehaviour.TYPE) != null)
 				canDetect = true;
-			else if (tileEntity != null && (TransferUtil.getItemStorage(tileEntity)
-				!= null
-				|| TransferUtil.getFluidStorage(tileEntity)
-					!= null))
+			else if (TransferUtil.getItemStorage(world, offsetPos, face.getOpposite()) != null
+					|| TransferUtil.getFluidStorage(world, offsetPos, face.getOpposite()) != null)
 				canDetect = true;
 			else if (tileEntity instanceof FunnelTileEntity)
 				canDetect = true;
