@@ -1,5 +1,18 @@
 package com.simibubi.create.content.contraptions.fluids;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.mutable.MutableBoolean;
+
 import com.simibubi.create.content.contraptions.base.KineticTileEntity;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
@@ -11,24 +24,15 @@ import com.simibubi.create.foundation.utility.Pair;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat.Chaser;
 
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-
-import org.apache.commons.lang3.mutable.MutableBoolean;
-
-import javax.annotation.Nullable;
-
-import java.util.*;
-import java.util.Map.Entry;
 
 public class PumpTileEntity extends KineticTileEntity {
 
@@ -273,10 +277,10 @@ public class PumpTileEntity extends KineticTileEntity {
 		return atLeastOneBranchSuccessful;
 	}
 
-	private boolean hasReachedValidEndpoint(LevelAccessor world, BlockFace blockFace, boolean pull) {
+	private boolean hasReachedValidEndpoint(Level world, BlockFace blockFace, boolean pull) {
 		BlockPos connectedPos = blockFace.getConnectedPos();
-		BlockState connectedState = world.getBlockState(connectedPos);
 		BlockEntity tileEntity = world.getBlockEntity(connectedPos);
+		BlockState connectedState = tileEntity != null ? tileEntity.getBlockState() : world.getBlockState(connectedPos);
 		Direction face = blockFace.getFace();
 
 		// facing a pump
@@ -292,12 +296,8 @@ public class PumpTileEntity extends KineticTileEntity {
 			return false;
 
 		// fluid handler endpoint
-		if (tileEntity != null) {
-			Storage<FluidVariant> capability =
-					TransferUtil.getFluidStorage(tileEntity, face.getOpposite());
-			if (capability != null)
-				return true;
-		}
+		if (FluidStorage.SIDED.find(world, connectedPos, null, tileEntity, face.getOpposite()) != null)
+			return true;
 
 		// open endpoint
 		return FluidPropagator.isOpenEnd(world, blockFace.getPos(), face);

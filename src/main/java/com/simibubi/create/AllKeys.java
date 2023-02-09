@@ -1,8 +1,8 @@
 package com.simibubi.create;
 
-import com.mojang.blaze3d.platform.InputConstants;
-
 import org.lwjgl.glfw.GLFW;
+
+import com.mojang.blaze3d.platform.InputConstants;
 
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
@@ -34,6 +34,17 @@ public enum AllKeys {
 				continue;
 			key.keybind = new KeyMapping(key.description, key.key, Create.NAME);
 			KeyBindingHelper.registerKeyBinding(key.keybind);
+		}
+	}
+
+	// fabric: sometimes after opening the toolbox menu, alt gets stuck as pressed until a screen is opened.
+	// why is this needed? why did this only just now break? Good questions! I wish I knew.
+	public static void fixBinds() {
+		long window = Minecraft.getInstance().getWindow().getWindow();
+		for (AllKeys key : values()) {
+			if (key.keybind == null)
+				continue;
+			key.keybind.setDown(InputConstants.isKeyDown(window, key.getBoundCode()));
 		}
 	}
 

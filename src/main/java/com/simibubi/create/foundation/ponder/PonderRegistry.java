@@ -16,6 +16,7 @@ import com.simibubi.create.Create;
 import com.simibubi.create.foundation.ponder.content.PonderIndex;
 import com.simibubi.create.foundation.ponder.content.SharedText;
 
+import io.github.fabricators_of_create.porting_lib.util.EnvExecutor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -24,6 +25,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -71,7 +73,13 @@ public class PonderRegistry {
 		for (int i = 0; i < entries.size(); i++) {
 			PonderStoryBoardEntry sb = entries.get(i);
 			StructureTemplate activeTemplate = loadSchematic(sb.getSchematicLocation());
-			PonderWorld world = new PonderWorld(BlockPos.ZERO, Minecraft.getInstance().level);
+			Level level = EnvExecutor.unsafeRunForDist(
+					() -> () -> Minecraft.getInstance().level,
+					() -> () -> {
+						throw new IllegalStateException("Cannot compile on a server");
+					}
+			);
+			PonderWorld world = new PonderWorld(BlockPos.ZERO, level);
 			activeTemplate.placeInWorld(world, BlockPos.ZERO, BlockPos.ZERO, new StructurePlaceSettings(), world.random, Block.UPDATE_CLIENTS);
 			world.createBackup();
 			PonderScene scene = compileScene(i, sb, world);

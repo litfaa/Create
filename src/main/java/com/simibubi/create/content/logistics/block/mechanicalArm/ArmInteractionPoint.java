@@ -31,7 +31,7 @@ public class ArmInteractionPoint {
 	protected Mode mode = Mode.DEPOSIT;
 
 	protected BlockState cachedState;
-	protected StorageProvider<ItemVariant> provider = null;
+	protected StorageProvider<ItemVariant> handlerProvider = null;
 	protected ArmAngleTarget cachedAngles;
 
 	public ArmInteractionPoint(ArmInteractionPointType type, Level level, BlockPos pos, BlockState state) {
@@ -94,10 +94,10 @@ public class ArmInteractionPoint {
 
 	@Nullable
 	protected Storage<ItemVariant> getHandler() {
-		if (provider == null) {
-			provider = StorageProvider.createForItems(level, pos);
+		if (handlerProvider == null) {
+			handlerProvider = StorageProvider.createForItems(level, pos);
 		}
-		return provider.get(Direction.UP);
+		return handlerProvider.get(Direction.UP);
 	}
 
 	public ItemStack insert(ItemStack stack, TransactionContext ctx) {

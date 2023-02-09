@@ -5,7 +5,7 @@ modrinth {
     versionName = published_version_name
     versionType = release_type
     changelog = changelog_text
-    uploadFile = remapJar
+    uploadFile = file("build/libs/${remapJar.archiveBaseName.get()}-${version}.jar")
     gameVersions = [ minecraft_version ]
     loaders = [ "fabric", "quilt" ]
     dependencies {

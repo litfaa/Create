@@ -752,7 +752,7 @@ public class BrassTunnelTileEntity extends BeltTunnelTileEntity implements IHave
 	}
 
 	public Storage<ItemVariant> getBeltCapability() {
-		return storageBelow != null ? storageBelow.get(Direction.UP) : null;
+		return belowProvider != null ? belowProvider.get(Direction.UP) : null;
 	}
 
 	public enum SelectionMode implements INamedIconOptions {

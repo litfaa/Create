@@ -2,17 +2,16 @@ package com.simibubi.create.content.logistics.block.redstone;
 
 import com.simibubi.create.AllItems;
 import com.simibubi.create.AllShapes;
-import com.simibubi.create.AllTags;
 import com.simibubi.create.AllTileEntities;
 import com.simibubi.create.content.contraptions.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.ITE;
 import com.simibubi.create.foundation.gui.ScreenOpener;
 import com.simibubi.create.foundation.utility.Iterate;
+import com.tterrag.registrate.fabric.EnvExecutor;
+
 import io.github.fabricators_of_create.porting_lib.block.ConnectableRedstoneBlock;
 import io.github.fabricators_of_create.porting_lib.block.NeighborChangeListeningBlock;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import com.tterrag.registrate.fabric.EnvExecutor;
-
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.player.LocalPlayer;
@@ -29,7 +28,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
@@ -124,13 +122,10 @@ public class StockpileSwitchBlock extends HorizontalDirectionalBlock
 
 		Direction preferredFacing = null;
 		for (Direction face : Iterate.horizontalDirections) {
-			BlockEntity te = context.getLevel()
-				.getBlockEntity(context.getClickedPos()
-					.relative(face));
-			if (te != null && (TransferUtil.getItemStorage(te)
-				!= null
-				|| TransferUtil.getFluidStorage(te)
-					!= null))
+			BlockPos offsetPos = context.getClickedPos().relative(face);
+			Level world = context.getLevel();
+			if (TransferUtil.getItemStorage(world, offsetPos, face.getOpposite()) != null
+					|| TransferUtil.getFluidStorage(world, offsetPos, face.getOpposite()) != null)
 				if (preferredFacing == null)
 					preferredFacing = face;
 				else {

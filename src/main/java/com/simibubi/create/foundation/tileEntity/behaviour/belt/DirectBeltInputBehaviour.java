@@ -12,9 +12,9 @@ import com.simibubi.create.content.logistics.block.funnel.FunnelTileEntity;
 import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
 import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
 import com.simibubi.create.foundation.tileEntity.behaviour.BehaviourType;
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 
+import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import io.github.fabricators_of_create.porting_lib.util.StorageProvider;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
@@ -36,6 +36,8 @@ public class DirectBeltInputBehaviour extends TileEntityBehaviour {
 	private InsertionCallback tryInsert;
 	private AvailabilityPredicate canInsert;
 	private Supplier<Boolean> supportsBeltFunnels;
+	// fabric: transfer
+	private StorageProvider<ItemVariant> teItemStorageProvider;
 
 	public DirectBeltInputBehaviour(SmartTileEntity te) {
 		super(te);
@@ -65,7 +67,7 @@ public class DirectBeltInputBehaviour extends TileEntityBehaviour {
 	}
 
 	private ItemStack defaultInsertionCallback(TransportedItemStack inserted, Direction side, boolean simulate) {
-		Storage<ItemVariant> storage = TransferUtil.getItemStorage(tileEntity, side);
+		Storage<ItemVariant> storage = getTeItemStorage(side);
 		if (storage == null)
 			return inserted.stack;
 
@@ -81,6 +83,14 @@ public class DirectBeltInputBehaviour extends TileEntityBehaviour {
 			if (!simulate) t.commit();
 			return stack;
 		}
+	}
+
+	public Storage<ItemVariant> getTeItemStorage(Direction side) {
+		if (getWorld() == null)
+			return null;
+		if (teItemStorageProvider == null)
+			teItemStorageProvider = StorageProvider.createForItems(getWorld(), getPos());
+		return teItemStorageProvider.get(side);
 	}
 
 	// TODO: verify that this side is consistent across all calls

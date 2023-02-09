@@ -99,9 +99,6 @@ public class StockpileSwitchTileEntity extends SmartTileEntity {
 		float totalSpace = 0;
 		float prevLevel = currentLevel;
 
-		observedInventory.findNewCapability();
-		observedTank.findNewCapability();
-
 		BlockPos target = worldPosition.relative(getBlockState().getOptionalValue(StockpileSwitchBlock.FACING)
 			.orElse(Direction.NORTH));
 		BlockEntity targetTile = level.getBlockEntity(target);

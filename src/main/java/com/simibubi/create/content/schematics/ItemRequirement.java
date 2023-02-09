@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.decoration.ItemFrame;
@@ -160,8 +161,8 @@ public class ItemRequirement {
 			this.usage = usage;
 		}
 
-		public boolean matches(ItemStack other) {
-			return stack.sameItem(other);
+		public boolean matches(ItemVariant variant) {
+			return variant.getItem() == stack.getItem();
 		}
 	}
 
@@ -171,8 +172,8 @@ public class ItemRequirement {
 		}
 
 		@Override
-		public boolean matches(ItemStack other) {
-			return ItemStack.isSameItemSameTags(stack, other);
+		public boolean matches(ItemVariant variant) {
+			return variant.matches(stack);
 		}
 	}
 }

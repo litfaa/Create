@@ -23,8 +23,10 @@ import com.simibubi.create.foundation.utility.animation.LerpedFloat.Chaser;
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SidedStorageBlockEntity;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -258,18 +260,19 @@ public class ToolboxTileEntity extends SmartTileEntity implements MenuProvider, 
 		if (keepItems)
 			return;
 
-		Inventory playerInv = player.getInventory();
-		ItemStack playerStack = playerInv.getItem(hotbarSlot);
-		ItemStack toInsert = ToolboxInventory.cleanItemNBT(playerStack.copy());
+		PlayerInventoryStorage playerInv = PlayerInventoryStorage.of(player);
+		SingleSlotStorage<ItemVariant> storage = playerInv.getSlot(hotbarSlot);
+		if (storage.isResourceBlank())
+			return;
+		ItemVariant resource = storage.getResource();
+		int amount = (int) storage.getAmount();
+		ItemStack toInsert = ToolboxInventory.cleanItemNBT(resource.toStack(amount));
 		try (Transaction t = TransferUtil.getTransaction()) {
 			ItemStack remainder = inventory.distributeToCompartment(toInsert, slot, t);
-
-			if (remainder.getCount() != toInsert.getCount())
-				playerInv.setItem(hotbarSlot, remainder);
+			int inserted = amount - remainder.getCount();
+			storage.extract(resource, inserted, t);
 			t.commit();
 		}
-
-
 	}
 
 	private void tickAudio() {

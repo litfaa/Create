@@ -44,6 +44,8 @@ public interface IHaveGoggleInformation {
 	}
 
 	default boolean containedFluidTooltip(List<Component> tooltip, boolean isPlayerSneaking, Storage<FluidVariant> handler) {
+		if (handler == null)
+			return false;
 		FluidUnit unit = AllConfigs.CLIENT.fluidUnitType.get();
 		boolean simplify = AllConfigs.CLIENT.simplifyFluidUnit.get();
 		LangBuilder mb = Lang.translate(unit.getTranslationKey());

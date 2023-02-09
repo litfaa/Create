@@ -3,19 +3,26 @@ package com.simibubi.create.foundation.tileEntity.behaviour.inventory;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.google.common.base.Predicates;
 import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
 import com.simibubi.create.foundation.tileEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.tileEntity.behaviour.filtering.FilteringBehaviour;
+import com.simibubi.create.foundation.utility.BlockFace;
 
 import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
-
+import io.github.fabricators_of_create.porting_lib.util.StorageProvider;
+import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class InvManipulationBehaviour extends CapManipulationBehaviourBase<ItemVariant, InvManipulationBehaviour> {
 
@@ -45,8 +52,13 @@ public class InvManipulationBehaviour extends CapManipulationBehaviourBase<ItemV
 	}
 
 	@Override
-	protected Class<ItemVariant> capability() {
-		return ItemVariant.class;
+	protected StorageProvider<ItemVariant> getProvider(BlockFace face) {
+		return StorageProvider.createForItems(getWorld(), face.getPos());
+	}
+
+	@Override
+	protected UnsidedStorageProvider<ItemVariant> getUnsidedProvider(BlockPos pos) {
+		return new UnsidedItemStorageProvider(ItemStorage.SIDED, getWorld(), pos);
 	}
 
 	public ItemStack extract() {
@@ -65,9 +77,9 @@ public class InvManipulationBehaviour extends CapManipulationBehaviourBase<ItemV
 		boolean shouldSimulate = simulateNext;
 		simulateNext = false;
 
-		if (getWorld().isClientSide)
+		if (getWorld().isClientSide || !hasInventory())
 			return ItemStack.EMPTY;
-		Storage<ItemVariant> inventory = targetCapability;
+		Storage<ItemVariant> inventory = getInventory();
 		if (inventory == null)
 			return ItemStack.EMPTY;
 
@@ -90,7 +102,7 @@ public class InvManipulationBehaviour extends CapManipulationBehaviourBase<ItemV
 	public ItemStack insert(ItemStack stack) {
 		boolean shouldSimulate = simulateNext;
 		simulateNext = false;
-		Storage<ItemVariant> inventory = targetCapability;
+		Storage<ItemVariant> inventory = hasInventory() ? getInventory() : null;
 		if (inventory == null)
 			return stack;
 		try (Transaction t = TransferUtil.getTransaction()) {
@@ -118,4 +130,15 @@ public class InvManipulationBehaviour extends CapManipulationBehaviourBase<ItemV
 		return behaviourType;
 	}
 
+	public static class UnsidedItemStorageProvider extends UnsidedStorageProvider<ItemVariant> {
+		protected UnsidedItemStorageProvider(BlockApiLookup<Storage<ItemVariant>, Direction> lookup, Level level, BlockPos pos) {
+			super(lookup, level, pos);
+		}
+
+		@Nullable
+		@Override
+		public Storage<ItemVariant> get() {
+			return TransferUtil.getItemStorage(level, pos);
+		}
+	}
 }

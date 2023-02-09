@@ -392,7 +392,7 @@ public class FluidTankTileEntity extends SmartTileEntity implements IHaveGoggleI
 		if (controllerTE.boiler.addToGoggleTooltip(tooltip, isPlayerSneaking, controllerTE.getTotalTankSize()))
 			return true;
 		return containedFluidTooltip(tooltip, isPlayerSneaking,
-			TransferUtil.getFluidStorage(controllerTE));
+				controllerTE.getFluidStorage(null));
 	}
 
 	@Override

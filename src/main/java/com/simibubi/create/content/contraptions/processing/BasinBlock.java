@@ -1,5 +1,7 @@
 package com.simibubi.create.content.contraptions.processing;
 
+import java.util.List;
+
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.AllTileEntities;
@@ -13,16 +15,11 @@ import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
 import com.simibubi.create.foundation.tileEntity.behaviour.belt.DirectBeltInputBehaviour;
-import com.simibubi.create.foundation.tileEntity.behaviour.filtering.FilteringBehaviour;
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
 
+import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -51,8 +48,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-
-import java.util.List;
 
 public class BasinBlock extends Block implements ITE<BasinTileEntity>, IWrenchable {
 
@@ -91,9 +86,10 @@ public class BasinBlock extends Block implements ITE<BasinTileEntity>, IWrenchab
 
 		return onTileEntityUse(worldIn, pos, te -> {
 			if (!heldItem.isEmpty()) {
-				if (FluidHelper.tryEmptyItemIntoTE(worldIn, player, handIn, heldItem, te))
+				Direction direction = hit.getDirection();
+				if (FluidHelper.tryEmptyItemIntoTE(worldIn, player, handIn, heldItem, te, direction))
 					return InteractionResult.SUCCESS;
-				if (FluidHelper.tryFillItemFromTE(worldIn, player, handIn, heldItem, te))
+				if (FluidHelper.tryFillItemFromTE(worldIn, player, handIn, heldItem, te, direction))
 					return InteractionResult.SUCCESS;
 
 				if (EmptyingByBasin.canItemBeEmptied(worldIn, heldItem)
@@ -101,7 +97,7 @@ public class BasinBlock extends Block implements ITE<BasinTileEntity>, IWrenchab
 					return InteractionResult.SUCCESS;
 				if (heldItem.getItem()
 					.equals(Items.SPONGE)) {
-					Storage<FluidVariant> storage = TransferUtil.getFluidStorage(te);
+					Storage<FluidVariant> storage = te.getFluidStorage(direction);
 					if (storage != null && !TransferUtil.extractAnyFluid(storage, Long.MAX_VALUE).isEmpty()) {
 						return InteractionResult.SUCCESS;
 					}

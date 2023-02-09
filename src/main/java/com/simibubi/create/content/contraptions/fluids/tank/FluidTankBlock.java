@@ -174,15 +174,16 @@ public class FluidTankBlock extends Block implements IWrenchable, ITE<FluidTankT
 		if (te == null)
 			return InteractionResult.FAIL;
 
-		Storage<FluidVariant> fluidTank = TransferUtil.getFluidStorage(te, ray.getDirection());
+		Direction direction = ray.getDirection();
+		Storage<FluidVariant> fluidTank = te.getFluidStorage(direction);
 		if (fluidTank == null)
 			return InteractionResult.PASS;
 
 		FluidStack prevFluidInTank = TransferUtil.firstCopyOrEmpty(fluidTank);
 
-		if (FluidHelper.tryEmptyItemIntoTE(world, player, hand, heldItem, te))
+		if (FluidHelper.tryEmptyItemIntoTE(world, player, hand, heldItem, te, direction))
 			exchange = FluidExchange.ITEM_TO_TANK;
-		else if (FluidHelper.tryFillItemFromTE(world, player, hand, heldItem, te))
+		else if (FluidHelper.tryFillItemFromTE(world, player, hand, heldItem, te, direction))
 			exchange = FluidExchange.TANK_TO_ITEM;
 
 		if (exchange == null) {

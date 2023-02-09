@@ -1,5 +1,12 @@
 package com.simibubi.create.content.contraptions.fluids;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllTags.AllBlockTags;
 import com.simibubi.create.content.contraptions.fluids.PipeConnection.Flow;
@@ -14,7 +21,7 @@ import com.simibubi.create.foundation.utility.BlockHelper;
 import com.simibubi.create.foundation.utility.Iterate;
 import com.simibubi.create.foundation.utility.Pair;
 
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -27,13 +34,6 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-
-import javax.annotation.Nullable;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class FluidPropagator {
 
@@ -197,7 +197,7 @@ public class FluidPropagator {
 	}
 
 	public static boolean hasFluidCapability(BlockGetter world, BlockPos pos, Direction side) {
-		return world instanceof Level level && TransferUtil.getFluidStorage(level, pos, side) != null;
+		return world instanceof Level level && FluidStorage.SIDED.find(level, pos, side) != null;
 	}
 
 	@Nullable

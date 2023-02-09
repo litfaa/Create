@@ -8,7 +8,6 @@ import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.block.ITE;
 import com.simibubi.create.foundation.fluid.FluidHelper;
 import com.simibubi.create.foundation.tileEntity.ComparatorUtil;
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -49,7 +48,7 @@ public class ItemDrainBlock extends Block implements IWrenchable, ITE<ItemDrainT
 		return onTileEntityUse(worldIn, pos, te -> {
 			if (!heldItem.isEmpty()) {
 				te.internalTank.allowInsertion();
-				InteractionResult tryExchange = tryExchange(worldIn, player, handIn, heldItem, te);
+				InteractionResult tryExchange = tryExchange(worldIn, player, handIn, heldItem, te, Direction.DOWN); // up prohibits insertion
 				te.internalTank.forbidInsertion();
 				if (tryExchange.consumesAction())
 					return tryExchange;
@@ -66,8 +65,8 @@ public class ItemDrainBlock extends Block implements IWrenchable, ITE<ItemDrainT
 	}
 
 	protected InteractionResult tryExchange(Level worldIn, Player player, InteractionHand handIn, ItemStack heldItem,
-		ItemDrainTileEntity te) {
-		if (FluidHelper.tryEmptyItemIntoTE(worldIn, player, handIn, heldItem, te))
+		ItemDrainTileEntity te, Direction side) {
+		if (FluidHelper.tryEmptyItemIntoTE(worldIn, player, handIn, heldItem, te, side))
 			return InteractionResult.SUCCESS;
 		if (EmptyingByBasin.canItemBeEmptied(worldIn, heldItem))
 			return InteractionResult.SUCCESS;
@@ -102,7 +101,7 @@ public class ItemDrainBlock extends Block implements IWrenchable, ITE<ItemDrainT
 		super.setPlacedBy(pLevel, pPos, pState, pPlacer, pStack);
 		AdvancementBehaviour.setPlacedBy(pLevel, pPos, pPlacer);
 	}
-	
+
 	@Override
 	public BlockEntityType<? extends ItemDrainTileEntity> getTileEntityType() {
 		return AllTileEntities.ITEM_DRAIN.get();

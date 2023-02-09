@@ -47,7 +47,7 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements SidedStorag
 	public Map<Direction, LerpedFloat> flaps;
 	public Set<Direction> sides;
 
-	protected StorageProvider<ItemVariant> storageBelow;
+	protected StorageProvider<ItemVariant> belowProvider;
 	protected List<Pair<Direction, Boolean>> flapsToSend;
 
 	public BeltTunnelTileEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -60,7 +60,7 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements SidedStorag
 	@Override
 	public void setLevel(Level level) {
 		super.setLevel(level);
-		storageBelow = StorageProvider.createForItems(level, worldPosition.below()).filter(this::isBeltStorage);
+		belowProvider = StorageProvider.createForItems(level, worldPosition.below()).filter(this::isBeltStorage);
 	}
 
 	public boolean isBeltStorage(StorageProvider<ItemVariant> provider, Storage<ItemVariant> storage) {
@@ -201,8 +201,8 @@ public class BeltTunnelTileEntity extends SmartTileEntity implements SidedStorag
 
 	@Override
 	public Storage<ItemVariant> getItemStorage(@Nullable Direction face) {
-		if (storageBelow != null) {
-			return storageBelow.get(Direction.UP);
+		if (belowProvider != null) {
+			return belowProvider.get(Direction.UP);
 		}
 		return null;
 	}

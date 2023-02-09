@@ -7,47 +7,38 @@ import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
 import com.simibubi.create.foundation.tileEntity.behaviour.filtering.FilteringBehaviour;
 import com.simibubi.create.foundation.utility.BlockFace;
 
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import io.github.fabricators_of_create.porting_lib.util.StorageProvider;
+import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public abstract class CapManipulationBehaviourBase<T, S extends CapManipulationBehaviourBase<?, ?>>
 	extends TileEntityBehaviour {
 
+	// fabric: move to StorageProvider, big changes
+
 	protected InterfaceProvider target;
-	protected Storage<T> targetCapability;
+	private StorageProvider<T> targetStorageProvider;
 	protected boolean simulateNext;
 	protected boolean bypassSided;
-	private boolean findNewNextTick;
+	protected Direction side;
 
 	public CapManipulationBehaviourBase(SmartTileEntity te, InterfaceProvider target) {
 		super(te);
 		setLazyTickRate(5);
 		this.target = target;
-		targetCapability = null;
+		targetStorageProvider = null;
 		simulateNext = false;
 		bypassSided = false;
 	}
 
-	protected abstract Class<T> capability();
+	protected abstract StorageProvider<T> getProvider(BlockFace face);
 
-	@Override
-	public void initialize() {
-		super.initialize();
-		findNewNextTick = true;
-	}
-
-	@Override
-	public void onNeighborChanged(BlockPos neighborPos) {
-		BlockFace targetBlockFace = target.getTarget(getWorld(), tileEntity.getBlockPos(), tileEntity.getBlockState());
-		if (targetBlockFace.getConnectedPos()
-			.equals(neighborPos))
-			onHandlerInvalidated(targetCapability);
-	}
+	protected abstract UnsidedStorageProvider<T> getUnsidedProvider(BlockPos pos);
 
 	@SuppressWarnings("unchecked")
 	public S bypassSidedness() {
@@ -65,32 +56,25 @@ public abstract class CapManipulationBehaviourBase<T, S extends CapManipulationB
 	}
 
 	public boolean hasInventory() {
-		return targetCapability != null;
+		return targetStorageProvider != null && getInventory() != null;
 	}
 
 	@Nullable
 	public Storage<T> getInventory() {
-		return targetCapability;
-	}
-
-	protected void onHandlerInvalidated(Storage<T> handler) {
-		findNewNextTick = true;
-		targetCapability = null;
+		return targetStorageProvider.get(side);
 	}
 
 	@Override
 	public void lazyTick() {
 		super.lazyTick();
-		if (targetCapability == null)
-			findNewCapability();
-	}
-
-	@Override
-	public void tick() {
-		super.tick();
-		if (findNewNextTick || getWorld().getGameTime() % 64 == 0) {
-			findNewNextTick = false;
-			findNewCapability();
+		if (targetStorageProvider == null) {
+			BlockFace face = this.target.getTarget(getWorld(), getPos(), tileEntity.getBlockState());
+			if (bypassSided) {
+				targetStorageProvider = getUnsidedProvider(face.getConnectedPos());
+			} else {
+				this.side = face.getFace();
+				targetStorageProvider = getProvider(face.getOpposite());
+			}
 		}
 	}
 
@@ -100,26 +84,6 @@ public abstract class CapManipulationBehaviourBase<T, S extends CapManipulationB
 		if (filter != null && !filter.anyAmount())
 			amount = filter.getAmount();
 		return amount;
-	}
-
-	@SuppressWarnings("unchecked")
-	public void findNewCapability() {
-		Level world = getWorld();
-		BlockFace targetBlockFace = target.getTarget(world, tileEntity.getBlockPos(), tileEntity.getBlockState())
-			.getOpposite();
-		BlockPos pos = targetBlockFace.getPos();
-
-		targetCapability = null;
-
-		if (!world.isLoaded(pos))
-			return;
-		BlockEntity invTE = world.getBlockEntity(pos);
-		if (invTE == null)
-			return;
-		Class<T> capability = capability();
-		targetCapability = bypassSided
-				? TransferUtil.getStorage(invTE, null, capability)
-				: TransferUtil.getStorage(invTE, targetBlockFace.getFace(), capability);
 	}
 
 	@FunctionalInterface
@@ -138,6 +102,21 @@ public abstract class CapManipulationBehaviourBase<T, S extends CapManipulationB
 		}
 
 		public BlockFace getTarget(Level world, BlockPos pos, BlockState blockState);
+	}
+
+	public abstract static class UnsidedStorageProvider<T> extends StorageProvider<T> {
+		protected UnsidedStorageProvider(BlockApiLookup<Storage<T>, Direction> lookup, Level level, BlockPos pos) {
+			super(lookup, level, pos);
+		}
+
+		@Override
+		@Nullable
+		public Storage<T> get(Direction direction) {
+			return get();
+		}
+
+		@Nullable
+		public abstract Storage<T> get();
 	}
 
 }

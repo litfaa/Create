@@ -501,7 +501,7 @@ public class ChuteTileEntity extends SmartTileEntity implements IHaveGoggleInfor
 		if (level == null)
 			return null;
 		StorageProvider<ItemVariant> provider = side == Direction.UP ? capAbove : capBelow;
-		BlockEntity te = level.getBlockEntity(provider.pos);
+		BlockEntity te = provider.findBlockEntity();
 		if (te instanceof ChuteTileEntity) {
 			if (side != Direction.DOWN || !(te instanceof SmartChuteTileEntity) || getItemMotion() > 0)
 				return null;
