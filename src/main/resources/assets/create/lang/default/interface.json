@@ -145,6 +145,8 @@
   "tag.create.casing": "Casings",
   "tag.create.sleepers": "Sleepers",
   "tag.create.pressurized_air_sources": "Pressurized Air Sources",
+  "tag.create.deployable_drink": "Deployable Drinks",
+  "tag.create.diving_fluids": "Diving Fluids",
 
 	"create.generic.range": "Range",
 	"create.generic.radius": "Radius",
