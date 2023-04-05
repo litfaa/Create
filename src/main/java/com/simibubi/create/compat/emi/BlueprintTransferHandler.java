@@ -1,6 +1,5 @@
 package com.simibubi.create.compat.emi;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -9,28 +8,23 @@ import com.simibubi.create.content.curiosities.tools.BlueprintAssignCompleteReci
 import com.simibubi.create.content.curiosities.tools.BlueprintContainer;
 import com.simibubi.create.foundation.networking.AllPackets;
 
-import dev.emi.emi.api.EmiFillAction;
-import dev.emi.emi.api.EmiRecipeHandler;
 import dev.emi.emi.api.recipe.EmiCraftingRecipe;
 import dev.emi.emi.api.recipe.EmiPlayerInventory;
 import dev.emi.emi.api.recipe.EmiRecipe;
+import dev.emi.emi.api.recipe.handler.EmiCraftContext;
+import dev.emi.emi.api.recipe.handler.EmiRecipeHandler;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.world.inventory.Slot;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public class BlueprintTransferHandler implements EmiRecipeHandler<BlueprintContainer> {
+	private static final EmiPlayerInventory empty = new EmiPlayerInventory(List.of());
 
 	@Override
-	public List<Slot> getInputSources(BlueprintContainer handler) {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public List<Slot> getCraftingSlots(BlueprintContainer handler) {
-		return Collections.emptyList();
+	public EmiPlayerInventory getInventory(AbstractContainerScreen<BlueprintContainer> screen) {
+		return empty;
 	}
 
 	@Override
@@ -39,14 +33,14 @@ public class BlueprintTransferHandler implements EmiRecipeHandler<BlueprintConta
 	}
 
 	@Override
-	public boolean canCraft(EmiRecipe recipe, EmiPlayerInventory inventory, AbstractContainerScreen<BlueprintContainer> screen) {
+	public boolean canCraft(EmiRecipe recipe, EmiCraftContext<BlueprintContainer> context) {
 		return true;
 	}
 
 	@Override
-	public boolean performFill(EmiRecipe recipe, AbstractContainerScreen<BlueprintContainer> screen, EmiFillAction action, int amount) {
+	public boolean craft(EmiRecipe recipe, EmiCraftContext<BlueprintContainer> context) {
 		if (recipe instanceof EmiCraftingRecipe craftingRecipe) {
-			Minecraft.getInstance().setScreen(screen);
+			Minecraft.getInstance().setScreen(context.getScreen());
 			AllPackets.channel.sendToServer(new BlueprintAssignCompleteRecipePacket(craftingRecipe.getId()));
 			return true;
 		}

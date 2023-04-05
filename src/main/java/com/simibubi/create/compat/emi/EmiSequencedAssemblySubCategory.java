@@ -3,9 +3,10 @@ package com.simibubi.create.compat.emi;
 import java.util.List;
 import java.util.function.BiFunction;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.simibubi.create.compat.emi.recipes.CreateEmiRecipe;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import com.simibubi.create.content.contraptions.components.deployer.DeployerApplicationRecipe;
 import com.simibubi.create.content.contraptions.itemAssembly.SequencedRecipe;
 import com.simibubi.create.foundation.utility.Lang;
@@ -14,6 +15,8 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 
 public abstract class EmiSequencedAssemblySubCategory {
 	private final int width;
@@ -27,6 +30,11 @@ public abstract class EmiSequencedAssemblySubCategory {
 	}
 
 	public abstract void addWidgets(WidgetHolder widgets, int x, int y, SequencedRecipe<?> recipe, int index);
+
+	@Nullable
+	public EmiIngredient getAppliedIngredient(SequencedRecipe<?> recipe) {
+		return null;
+	}
 
 	// TODO tooltips reference first item in an ingredient, EMI has canonical names for tags, use that instead?
 	// I tried to implement this and Ingredients not exposing tags is painful
@@ -64,9 +72,15 @@ public abstract class EmiSequencedAssemblySubCategory {
 		}
 
 		@Override
-		public void addWidgets(WidgetHolder widgets, int x, int y, SequencedRecipe<?> recipe, int index) {
+		@NotNull
+		public EmiIngredient getAppliedIngredient(SequencedRecipe<?> recipe) {
 			FluidStack fluid = recipe.getRecipe().getFluidIngredients().get(0).getMatchingFluidStacks().get(0);
-			CreateEmiRecipe.addSlot(widgets, CreateEmiRecipe.fluidStack(fluid), x + 3, y + 13);
+			return CreateEmiRecipe.fluidStack(fluid);
+		}
+
+		@Override
+		public void addWidgets(WidgetHolder widgets, int x, int y, SequencedRecipe<?> recipe, int index) {
+			CreateEmiRecipe.addSlot(widgets, getAppliedIngredient(recipe), x + 3, y + 13);
 			widgets.addDrawable(x, y, getWidth(), 96, (matrices, mouseX, mouseY, delta) -> {
 				float scale = 0.75f;
 				matrices.translate(3, 54, 0);
@@ -84,8 +98,14 @@ public abstract class EmiSequencedAssemblySubCategory {
 		}
 
 		@Override
+		@NotNull
+		public EmiIngredient getAppliedIngredient(SequencedRecipe<?> recipe) {
+			return EmiIngredient.of(recipe.getRecipe().getIngredients().get(1));
+		}
+
+		@Override
 		public void addWidgets(WidgetHolder widgets, int x, int y, SequencedRecipe<?> recipe, int index) {
-			EmiIngredient ingredient = EmiIngredient.of(recipe.getRecipe().getIngredients().get(1));
+			EmiIngredient ingredient = getAppliedIngredient(recipe);
 			if (recipe.getAsAssemblyRecipe() instanceof DeployerApplicationRecipe deploy && deploy.shouldKeepHeldItem()) {
 				for (EmiStack stack : ingredient.getEmiStacks()) {
 					stack.setRemainder(stack);

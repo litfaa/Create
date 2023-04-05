@@ -180,6 +180,7 @@ public class BasinBlock extends Block implements ITE<BasinTileEntity>, IWrenchab
 	@Override
 	public int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos) {
 		return getTileEntityOptional(worldIn, pos).map(BasinTileEntity::getInputInventory)
+				.filter(basin -> !Transaction.isOpen()) // fabric: hack fix for comparators updating when they shouldn't
 			.map(ItemHelper::calcRedstoneFromInventory)
 			.orElse(0);
 	}

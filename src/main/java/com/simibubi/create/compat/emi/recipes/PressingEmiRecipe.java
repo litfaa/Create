@@ -21,7 +21,7 @@ public class PressingEmiRecipe extends CreateEmiRecipe<PressingRecipe> {
 		addSlot(widgets, input.get(0), 6, 66);
 
 		for (int i = 0; i < output.size(); i++) {
-			addChancedSlot(widgets, output.get(i), 110 + i * 19, 65, i).recipeContext(this);
+			addSlot(widgets, output.get(i), 110 + i * 19, 65).recipeContext(this);
 		}
 
 		CreateEmiAnimations.addPress(widgets, 50, 40, false);

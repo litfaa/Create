@@ -24,7 +24,7 @@ public class MillingEmiRecipe extends CreateEmiRecipe<MillingRecipe> {
 		for (int i = 0; i < output.size(); i++) {
 			int xOff = (i % 2) * 19;
 			int yOff = (i / 2) * -19;
-			addChancedSlot(widgets, output.get(i), 133 + xOff, 27 + yOff, i).recipeContext(this);
+			addSlot(widgets, output.get(i), 133 + xOff, 27 + yOff).recipeContext(this);
 		}
 
 		CreateEmiAnimations.addMillstone(widgets, 46, 45);

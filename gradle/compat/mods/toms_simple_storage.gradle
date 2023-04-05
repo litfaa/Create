@@ -1,0 +1,13 @@
+repositories {
+    maven { url = "https://api.modrinth.com/maven" }
+}
+
+// https://modrinth.com/mod/toms-storage/versions
+String tomsStorageVersion = "1.18-1.5.0-fabric"
+// https://modrinth.com/mod/cloth-config/versions
+String clothConfigVersion = "gPqHXnrg"
+
+dependencies {
+    modLocalRuntime("maven.modrinth:toms-storage:$tomsStorageVersion")
+    modLocalRuntime("maven.modrinth:cloth-config:$clothConfigVersion")
+}

@@ -87,14 +87,16 @@ public class DeployerTileEntity extends KineticTileEntity implements SidedStorag
 		@Override
 		protected List<ItemStack> createSnapshot() {
 			List<ItemStack> stacks = new ArrayList<>();
-			stacks.add(player.getMainHandItem());
+			stacks.add(player == null ? ItemStack.EMPTY : player.getMainHandItem());
 			stacks.addAll(overflowItems);
 			return stacks;
 		}
 
 		@Override
 		protected void readSnapshot(List<ItemStack> snapshot) {
-			player.setItemInHand(InteractionHand.MAIN_HAND, snapshot.remove(0));
+			ItemStack held = snapshot.remove(0);
+			if (player != null)
+				player.setItemInHand(InteractionHand.MAIN_HAND, held);
 			overflowItems = snapshot;
 		}
 	};

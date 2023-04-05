@@ -7,17 +7,18 @@ import com.simibubi.create.compat.emi.CreateEmiPlugin;
 import com.simibubi.create.content.contraptions.fluids.actors.FillingRecipe;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 
-import dev.emi.emi.api.stack.EmiIngredient;
-import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
+import io.github.fabricators_of_create.porting_lib.util.FluidStack;
 
 public class SpoutEmiRecipe extends CreateEmiRecipe<FillingRecipe> {
 
 	public SpoutEmiRecipe(FillingRecipe recipe) {
 		super(CreateEmiPlugin.SPOUT_FILLING, recipe, 134, 74, c -> {});
-		input = List.of(EmiIngredient.of(recipe.getIngredients().get(0)),
-			fluidStack(recipe.getRequiredFluid().getMatchingFluidStacks().get(0)));
-		output = List.of(EmiStack.of(recipe.getRollableResults().get(0).getStack()));
+		input = List.of(
+				firstIngredientOrEmpty(recipe.getIngredients()),
+				firstFluidOrEmpty(recipe.getRequiredFluid().getMatchingFluidStacks())
+		);
+		output = List.of(firstResultOrEmpty(recipe.getRollableResults()));
 	}
 
 	@Override
@@ -30,6 +31,7 @@ public class SpoutEmiRecipe extends CreateEmiRecipe<FillingRecipe> {
 
 		addSlot(widgets, output.get(0), 109, 50).recipeContext(this);
 
-		CreateEmiAnimations.addSpout(widgets, widgets.getWidth() / 2 - 13, 22, recipe.getRequiredFluid().getMatchingFluidStacks());
+		List<FluidStack> fluids = recipe.getRequiredFluid().getMatchingFluidStacks();
+		CreateEmiAnimations.addSpout(widgets, widgets.getWidth() / 2 - 13, 22, fluids.isEmpty() ? List.of(FluidStack.EMPTY) : fluids);
 	}
 }

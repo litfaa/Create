@@ -4,19 +4,18 @@ import java.util.List;
 
 import com.simibubi.create.compat.emi.CreateEmiPlugin;
 import com.simibubi.create.compat.emi.EmiSequencedAssemblySubCategory;
-
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import com.simibubi.create.content.contraptions.itemAssembly.SequencedAssemblyRecipe;
 import com.simibubi.create.content.contraptions.itemAssembly.SequencedRecipe;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.AllIcons;
+import com.simibubi.create.foundation.utility.Components;
 import com.simibubi.create.foundation.utility.Lang;
 
 import dev.emi.emi.api.stack.EmiIngredient;
-import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 
 public class SequencedAssemblyEmiRecipe extends CreateEmiRecipe<SequencedAssemblyRecipe> {
 	public static final String[] ROMAN = {
@@ -32,7 +31,6 @@ public class SequencedAssemblyEmiRecipe extends CreateEmiRecipe<SequencedAssembl
 			width += getSubCategory(r).getWidth() + margin;
 		}
 		width -= margin;
-		chanced = recipe.getOutputChance() != 1;
 	}
 
 	@Override
@@ -56,14 +54,14 @@ public class SequencedAssemblyEmiRecipe extends CreateEmiRecipe<SequencedAssembl
 			addTexture(widgets, AllGuiTextures.JEI_CHANCE_SLOT, mid + 60 + xOff, 90)
 				.tooltip((mouseX, mouseY) -> List.of(
 					ClientTooltipComponent.create(Lang.translateDirect("recipe.assembly.junk").getVisualOrderText()),
-					ClientTooltipComponent.create(Lang.translateDirect("recipe.processing.chance", chance > 0.99 ? "<1" : 100 - (int) (chance * 100))
+					ClientTooltipComponent.create(Components.translatable("tooltip.emi.chance.produce", chance > 0.99 ? "<1" : 100 - (int) (chance * 100))
 						.withStyle(ChatFormatting.GOLD).getVisualOrderText())
 				));
 		}
 
 		addSlot(widgets, EmiIngredient.of(recipe.getIngredient()), mid - 64 + xOff, 90);
 
-		addChancedSlot(widgets, EmiStack.of(recipe.getResultItem()), mid + 41 + xOff, 90, recipe.getOutputChance()).recipeContext(this);
+		addSlot(widgets, output.get(0), mid + 41 + xOff, 90).recipeContext(this);
 
 		int sx = width / -2 + mid;
 		int x = sx;

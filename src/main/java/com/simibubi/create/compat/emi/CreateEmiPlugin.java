@@ -137,7 +137,12 @@ public class CreateEmiPlugin implements EmiPlugin {
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Override
 	public void register(EmiRegistry registry) {
-		registry.removeEmiStacks(s -> (s.getKey() instanceof TagDependentIngredientItem tag && tag.shouldHide()) || s.getKey() instanceof VirtualFluid);
+		registry.removeEmiStacks(s -> {
+			Object key = s.getKey();
+			if (key instanceof TagDependentIngredientItem tagDependent && tagDependent.shouldHide())
+				return true;
+			return key instanceof VirtualFluid;
+		});
 
 		registry.addGenericExclusionArea((screen, consumer) -> {
 			if (screen instanceof AbstractSimiContainerScreen<?> simi) {
@@ -157,9 +162,7 @@ public class CreateEmiPlugin implements EmiPlugin {
 
 		registry.setDefaultComparison(AllFluids.POTION.get(), c -> c.copy().nbt(true).build());
 
-		ALL.forEach((id, category) -> {
-			registry.addCategory(category);
-		});
+		ALL.forEach((id, category) -> registry.addCategory(category));
 
 		registry.addWorkstation(MILLING, EmiStack.of(AllBlocks.MILLSTONE.get()));
 		registry.addWorkstation(CRUSHING, EmiStack.of(AllBlocks.CRUSHING_WHEEL.get()));

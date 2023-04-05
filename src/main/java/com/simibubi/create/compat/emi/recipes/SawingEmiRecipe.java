@@ -23,7 +23,7 @@ public class SawingEmiRecipe extends CreateEmiRecipe<CuttingRecipe> {
 		for (int i = 0; i < output.size(); i++) {
 			int x = i % 2 == 0 ? 0 : 19;
 			int y = (i / 2) * -19;
-			addChancedSlot(widgets, output.get(i), 95 + x, 47 + y, i).recipeContext(this);
+			addSlot(widgets, output.get(i), 95 + x, 47 + y).recipeContext(this);
 		}
 
 		CreateEmiAnimations.addSaw(widgets, 50, 42);

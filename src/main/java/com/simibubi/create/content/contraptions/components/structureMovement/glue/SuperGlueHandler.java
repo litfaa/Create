@@ -3,20 +3,17 @@ package com.simibubi.create.content.contraptions.components.structureMovement.gl
 import java.util.HashSet;
 import java.util.Set;
 
-import com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes;
 import com.simibubi.create.AllItems;
-import com.simibubi.create.AllTags;
 import com.simibubi.create.content.contraptions.components.structureMovement.BlockMovementChecks;
 import com.simibubi.create.foundation.networking.AllPackets;
 import com.simibubi.create.foundation.utility.Iterate;
+import com.simibubi.create.foundation.utility.fabric.ReachUtil;
 import com.simibubi.create.foundation.utility.placement.IPlacementHelper;
 import com.simibubi.create.foundation.utility.worldWrappers.RayTraceWorld;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -26,22 +23,21 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.Vec3;
 
 public class SuperGlueHandler {
 
-	public static InteractionResult glueListensForBlockPlacement(BlockPlaceContext context) {
+	public static void glueListensForBlockPlacement(BlockPlaceContext context) {
 		LevelAccessor world = context.getLevel();
-		Entity entity = context.getPlayer();
+		Player entity = context.getPlayer();
 		BlockPos pos = context.getClickedPos();
 
-		if (entity == null || world == null || pos == null)
-			return InteractionResult.PASS;
+		if (entity == null)
+			return;
 		if (world.isClientSide())
-			return InteractionResult.PASS;
+			return;
 
 		Set<SuperGlueEntity> cached = new HashSet<>();
 		for (Direction direction : Iterate.directions) {
@@ -51,21 +47,19 @@ public class SuperGlueHandler {
 				AllPackets.channel.sendToClientsTrackingAndSelf(new GlueEffectPacket(pos, direction, true), entity);
 		}
 
-		if (entity instanceof Player)
-			return glueInOffHandAppliesOnBlockPlace(context.getLevel().getBlockState(context.getClickedPos().relative(context.getClickedFace().getOpposite())), pos, (Player) entity);
-		return InteractionResult.PASS;
+		glueInOffHandAppliesOnBlockPlace(context.getLevel().getBlockState(context.getClickedPos().relative(context.getClickedFace().getOpposite())), pos, entity);
 	}
 
-	public static InteractionResult glueInOffHandAppliesOnBlockPlace(BlockState placedAgainst, BlockPos pos, Player placer) {
+	public static void glueInOffHandAppliesOnBlockPlace(BlockState placedAgainst, BlockPos pos, Player placer) {
 		ItemStack itemstack = placer.getOffhandItem();
 		if (!AllItems.SUPER_GLUE.isIn(itemstack))
-			return InteractionResult.PASS;
+			return;
 		if (AllItems.WRENCH.isIn(placer.getMainHandItem()))
-			return InteractionResult.PASS;
+			return;
 		if (placedAgainst == IPlacementHelper.ID)
-			return InteractionResult.PASS;
+			return;
 
-		double distance = ReachEntityAttributes.getReachDistance(placer, placer.isCreative() ? 5 : 4.5);
+		double distance = ReachUtil.reach(placer);
 		Vec3 start = placer.getEyePosition(1);
 		Vec3 look = placer.getViewVector(1);
 		Vec3 end = start.add(look.x * distance, look.y * distance, look.z * distance);
@@ -78,16 +72,16 @@ public class SuperGlueHandler {
 
 		Direction face = ray.getDirection();
 		if (face == null || ray.getType() == Type.MISS)
-			return InteractionResult.PASS;
+			return;
 
 		BlockPos gluePos = ray.getBlockPos();
 		if (!gluePos.relative(face)
 			.equals(pos)) {
-			return InteractionResult.SUCCESS;
+			return;
 		}
 
 		if (SuperGlueEntity.isGlued(world, gluePos, face, null))
-			return InteractionResult.PASS;
+			return;
 
 		SuperGlueEntity entity = new SuperGlueEntity(world, SuperGlueEntity.span(gluePos, gluePos.relative(face)));
 		CompoundTag compoundnbt = itemstack.getTag();
@@ -101,7 +95,6 @@ public class SuperGlueHandler {
 			}
 			itemstack.hurtAndBreak(1, placer, SuperGlueItem::onBroken);
 		}
-		return InteractionResult.PASS;
 	}
 
 }

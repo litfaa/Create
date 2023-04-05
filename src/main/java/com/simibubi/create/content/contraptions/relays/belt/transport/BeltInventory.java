@@ -47,11 +47,11 @@ public class BeltInventory {
 		@Override
 		protected Data createSnapshot() {
 			List<TransportedItemStack> items = new LinkedList<>();
-			BeltInventory.this.items.forEach(transported -> items.add(transported.copy()));
+			BeltInventory.this.items.forEach(transported -> items.add(transported.fullCopy()));
 			List<TransportedItemStack> toInsert = new LinkedList<>();
-			BeltInventory.this.toInsert.forEach(transported -> toInsert.add(transported.copy()));
+			BeltInventory.this.toInsert.forEach(transported -> toInsert.add(transported.fullCopy()));
 			List<TransportedItemStack> toRemove = new LinkedList<>();
-			BeltInventory.this.toRemove.forEach(transported -> toRemove.add(transported.copy()));
+			BeltInventory.this.toRemove.forEach(transported -> toRemove.add(transported.fullCopy()));
 			return new Data(items, toInsert, toRemove);
 		}
 

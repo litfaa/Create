@@ -2,19 +2,22 @@ package com.simibubi.create.compat.emi.recipes;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.ImmutableList;
 import com.simibubi.create.compat.emi.CreateSlotWidget;
+import com.simibubi.create.compat.emi.EmiSequencedAssemblySubCategory;
+import com.simibubi.create.content.contraptions.itemAssembly.SequencedAssemblyRecipe;
+import com.simibubi.create.content.contraptions.itemAssembly.SequencedRecipe;
 import com.simibubi.create.content.contraptions.processing.BasinRecipe;
 import com.simibubi.create.content.contraptions.processing.ProcessingOutput;
 import com.simibubi.create.content.contraptions.processing.ProcessingRecipe;
 import com.simibubi.create.foundation.fluid.FluidIngredient;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.item.ItemHelper;
-import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.Pair;
 
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -25,7 +28,6 @@ import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.TextureWidget;
 import dev.emi.emi.api.widget.WidgetHolder;
 import io.github.fabricators_of_create.porting_lib.util.FluidStack;
-import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -37,7 +39,6 @@ public abstract class CreateEmiRecipe<T extends Recipe<?>> implements EmiRecipe 
 	protected ResourceLocation id;
 	protected List<EmiIngredient> input;
 	protected List<EmiStack> output;
-	protected boolean chanced;
 	protected int width, height;
 
 	public CreateEmiRecipe(EmiRecipeCategory category, T recipe, int width, int height) {
@@ -63,15 +64,28 @@ public abstract class CreateEmiRecipe<T extends Recipe<?>> implements EmiRecipe 
 			}
 			this.input = input.build();
 			this.output = output.build();
+		} else if (recipe instanceof SequencedAssemblyRecipe sequenced) {
+			this.output = List.of(EmiStack.of(recipe.getResultItem()).setChance(sequenced.getOutputChance()));
+			int loops = sequenced.getLoops();
+			ImmutableList.Builder<EmiIngredient> input = ImmutableList.builder();
+			input.add(EmiIngredient.of(sequenced.getIngredient()));
+			for (SequencedRecipe<?> sequence : sequenced.getSequence()) {
+				EmiSequencedAssemblySubCategory subCategory = SequencedAssemblyEmiRecipe.getSubCategory(sequence);
+				EmiIngredient ingredient = subCategory.getAppliedIngredient(sequence);
+				if (ingredient == null)
+					continue;
+				input.add(ingredient);
+				if (ingredient instanceof EmiStack stack && stack.getRemainder() == stack)
+					continue;
+				ingredient.setAmount(ingredient.getAmount() * loops);
+			}
+			this.input = input.build();
 		} else {
 			this.input = recipe.getIngredients().stream().map(EmiIngredient::of).toList();
 			if (recipe instanceof ProcessingRecipe<?> processing) {
 				ImmutableList.Builder<EmiStack> builder = ImmutableList.builder();
 				for (ProcessingOutput output : processing.getRollableResults()) {
-					if (output.getChance() != 1) {
-						chanced = true;
-					}
-					builder.add(EmiStack.of(output.getStack()));
+					builder.add(EmiStack.of(output.getStack()).setChance(output.getChance()));
 				}
 				this.output = builder.build();
 			} else {
@@ -119,37 +133,13 @@ public abstract class CreateEmiRecipe<T extends Recipe<?>> implements EmiRecipe 
 		return height;
 	}
 
-	@Override
-	public boolean supportsRecipeTree() {
-		return !chanced && EmiRecipe.super.supportsRecipeTree();
-	}
-
 	public static SlotWidget addSlot(WidgetHolder widgets, EmiIngredient stack, int x, int y) {
-		return addSlot(widgets, stack, x, y, AllGuiTextures.JEI_SLOT);
+		AllGuiTextures texture = stack.getChance() == 1 ? AllGuiTextures.JEI_SLOT : AllGuiTextures.JEI_CHANCE_SLOT;
+		return addSlot(widgets, stack, x, y, texture);
 	}
 
 	public static SlotWidget addSlot(WidgetHolder widgets, EmiIngredient stack, int x, int y, AllGuiTextures texture) {
 		return widgets.add(new CreateSlotWidget(stack, x, y)).backgroundTexture(texture.location, texture.startX, texture.startY);
-	}
-
-	public SlotWidget addChancedSlot(WidgetHolder widgets, EmiIngredient stack, int x, int y, float chance) {
-		if (chance != 1) {
-			return addSlot(widgets, stack, x, y, AllGuiTextures.JEI_CHANCE_SLOT)
-				.appendTooltip(Lang.translateDirect("recipe.processing.chance",
-					chance < 0.01 ? "<1" : (int) (chance * 100))
-					.withStyle(ChatFormatting.GOLD));
-		}
-		return addSlot(widgets, stack, x, y);
-	}
-
-	public SlotWidget addChancedSlot(WidgetHolder widgets, EmiIngredient stack, int x, int y, int index) {
-		if (recipe instanceof ProcessingRecipe<?> processing) {
-			List<ProcessingOutput> results = processing.getRollableResults();
-			if (index < results.size()) {
-				return addChancedSlot(widgets, stack, x, y, results.get(index).getChance());
-			}
-		}
-		return addSlot(widgets, stack, x, y);
 	}
 
 	public static EmiStack fluidStack(FluidStack stack) {
@@ -158,5 +148,21 @@ public abstract class CreateEmiRecipe<T extends Recipe<?>> implements EmiRecipe 
 
 	public static TextureWidget addTexture(WidgetHolder widgets, AllGuiTextures texture, int x, int y) {
 		return widgets.addTexture(texture.location, x, y, texture.width, texture.height, texture.startX, texture.startY);
+	}
+
+	public static <T, U> U firstOrElse(List<T> list, U empty, Function<T, U> function) {
+		return list.isEmpty() ? empty : function.apply(list.get(0));
+	}
+
+	public static EmiIngredient firstIngredientOrEmpty(List<Ingredient> ingredients) {
+		return firstOrElse(ingredients, EmiStack.EMPTY, EmiIngredient::of);
+	}
+
+	public static EmiStack firstFluidOrEmpty(List<FluidStack> fluids) {
+		return firstOrElse(fluids, EmiStack.EMPTY, CreateEmiRecipe::fluidStack);
+	}
+
+	public static EmiStack firstResultOrEmpty(List<ProcessingOutput> outputs) {
+		return firstOrElse(outputs, EmiStack.EMPTY, output -> EmiStack.of(output.getStack()));
 	}
 }

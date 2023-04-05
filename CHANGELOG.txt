@@ -5,8 +5,18 @@ No formatting, just plain text. CurseForge support for it is terrible.
 
 Change logging starts below:
 ----------
-- fix occasional crash with pipes
-- add 'create:diving_fluids' tag to dictate which fluids the Diving Helmet works in
-- fix funnels extracting from the opposite side they should be
-- translate more tags for EMI
-- fix crash with Sodium without Indium (still broken, but you'll see the warning)
+- fix Z-aligned contraptions rotating face-attached blocks wrong (#591)
+- fix a client crash with deployers (#822)
+- fix REI category icon alignment
+- fix large mechanical crafting recipes in REI (#826), improve them in EMI
+- update EMI compat for 0.7: chanced recipes in trees
+- update EMI recipe defaults
+- fix handling of sequenced assembly inputs and outputs in EMI
+- fix Wand of Symmetry mirroring placement even when it fails, deleting blocks (#856)
+- fix EMI plugin breaking with Farmer's Delight (#629)
+- fix crash with Modern Dynamics (#820)
+- fix pipe ponder fluid amount
+- prevent inserting multiple unstackables into basins
+- fix basins collecting remainders from all items, not just those consumed (#870)
+- fix GL error spam when unbinding Create's keybinds (#824)
+- fix some cases where item processing would be skipped (#874)

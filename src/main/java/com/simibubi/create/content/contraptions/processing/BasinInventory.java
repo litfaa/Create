@@ -30,14 +30,14 @@ public class BasinInventory extends SmartInventory {
 		StoragePreconditions.notBlankNotNegative(resource, maxAmount);
 		if (!insertionAllowed)
 			return 0;
-		maxAmount = Math.min(maxAmount, stackSize);
 		// Only insert if no other slot already has a stack of this item
 		try (Transaction test = transaction.openNested()) {
 			long contained = this.extract(resource, Long.MAX_VALUE, test);
 			if (contained != 0) {
 				// already have this item. can we stack?
-				long space = Math.max(0, stackSize - contained);
-				if (space == 0) {
+				long maxStackSize = Math.min(stackSize, resource.getItem().getMaxStackSize());
+				long space = Math.max(0, maxStackSize - contained);
+				if (space <= 0) {
 					// nope.
 					return 0;
 				} else {

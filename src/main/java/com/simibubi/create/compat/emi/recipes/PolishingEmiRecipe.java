@@ -26,7 +26,7 @@ public class PolishingEmiRecipe extends CreateEmiRecipe<SandPaperPolishingRecipe
 
 		addSlot(widgets, input.get(0), 5, 33);
 
-		addChancedSlot(widgets, output.get(0), 110, 33, 0).recipeContext(this);
+		addSlot(widgets, output.get(0), 110, 33).recipeContext(this);
 
 		NonNullList<Ingredient> ingredients = recipe.getIngredients();
 		if (!ingredients.isEmpty() && !ingredients.get(0).isEmpty()) {

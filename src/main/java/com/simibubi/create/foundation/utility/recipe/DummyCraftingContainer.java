@@ -1,13 +1,7 @@
 package com.simibubi.create.foundation.utility.recipe;
 
-import java.util.List;
-
 import org.jetbrains.annotations.NotNull;
 
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.inventory.CraftingContainer;
@@ -17,10 +11,9 @@ public class DummyCraftingContainer extends CraftingContainer {
 
 	private final NonNullList<ItemStack> inv;
 
-	public DummyCraftingContainer(Storage<ItemVariant> itemHandler) {
+	public DummyCraftingContainer(NonNullList<ItemStack> stacks) {
 		super(null, 0, 0);
-
-		this.inv = createInventory(itemHandler);
+		this.inv = stacks;
 	}
 
 	@Override
@@ -61,12 +54,4 @@ public class DummyCraftingContainer extends CraftingContainer {
 
 	@Override
 	public void fillStackedContents(@NotNull StackedContents helper) {}
-
-	private static NonNullList<ItemStack> createInventory(Storage<ItemVariant> itemHandler) {
-		try (Transaction t = TransferUtil.getTransaction()) {
-			List<ItemStack> stacks = TransferUtil.extractAllAsStacks(itemHandler);
-			return NonNullList.of(null, stacks.toArray(ItemStack[]::new));
-		}
-	}
-
 }

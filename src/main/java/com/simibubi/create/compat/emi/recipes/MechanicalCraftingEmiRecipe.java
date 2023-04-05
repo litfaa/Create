@@ -2,7 +2,6 @@ package com.simibubi.create.compat.emi.recipes;
 
 import java.util.List;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.compat.emi.CreateEmiAnimations;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
@@ -14,6 +13,7 @@ import dev.emi.emi.api.widget.Bounds;
 import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.WidgetHolder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.ShapedRecipe;
@@ -57,21 +57,25 @@ public class MechanicalCraftingEmiRecipe extends CreateEmiRecipe<CraftingRecipe>
 
 	@Override
 	public void addWidgets(WidgetHolder widgets) {
+		int x = getXPadding();
+		int y = getYPadding();
 		float scale = getScale();
-		int xOff = getXPadding();
-		int yOff = getYPadding() + 4;
 
 		addTexture(widgets, AllGuiTextures.JEI_DOWN_ARROW, 128, 59);
 		addTexture(widgets, AllGuiTextures.JEI_SHADOW, 113, 38);
 
-		for (int i = 0; i < recipe.getIngredients().size(); i++) {
-			if (!recipe.getIngredients().get(i).isEmpty()) {
-				int row = i / getWidth();
-				int col = i % getWidth();
-				widgets.add(new CrafterSlotWidget(input.get(row * getWidth() + col),
-								(int) ((col * 19 + xOff) * scale), (int) ((row * 19 + yOff) * scale)))
-						.backgroundTexture(AllGuiTextures.JEI_SLOT.location, AllGuiTextures.JEI_SLOT.startX, AllGuiTextures.JEI_SLOT.startY);
-			}
+
+		for (int i = 0; i < input.size(); i++) {
+			EmiIngredient ingredient = input.get(i);
+			if (ingredient.isEmpty())
+				continue;
+			float f = 19 * scale;
+			int xPosition = (int) (x + 1 + (i % getWidth()) * f);
+			int yPosition = (int) (y + 1 + (i / getWidth()) * f);
+			widgets.add(new CrafterSlotWidget(ingredient, xPosition, yPosition))
+					.backgroundTexture(
+							AllGuiTextures.JEI_SLOT.location, AllGuiTextures.JEI_SLOT.startX, AllGuiTextures.JEI_SLOT.startY
+					);
 		}
 
 		addSlot(widgets, output.get(0), 134, 81).recipeContext(this);
@@ -82,11 +86,11 @@ public class MechanicalCraftingEmiRecipe extends CreateEmiRecipe<CraftingRecipe>
 	}
 
 	public class CrafterSlotWidget extends SlotWidget {
-		private final Bounds bounds;
+		private boolean hideStack;
 
 		public CrafterSlotWidget(EmiIngredient stack, int x, int y) {
 			super(stack, x, y);
-			int w = (int) (18 * getScale());
+			int w = Mth.ceil(18 * getScale());
 			this.bounds = new Bounds(x, y, w, w);
 		}
 
@@ -96,17 +100,24 @@ public class MechanicalCraftingEmiRecipe extends CreateEmiRecipe<CraftingRecipe>
 		}
 
 		@Override
+		public EmiIngredient getStack() {
+			return hideStack ? EmiStack.EMPTY : super.getStack();
+		}
+
+		@Override
 		public void render(PoseStack matrices, int mouseX, int mouseY, float delta) {
-			PoseStack view = RenderSystem.getModelViewStack();
-			view.pushPose();
-			float scale = getScale();
-			view.translate(x, y, 0);
-			view.scale(scale, scale, scale);
-			view.translate(-x, -y, 0);
-			RenderSystem.applyModelViewMatrix();
+			matrices.pushPose();
+			hideStack = true;
 			super.render(matrices, mouseX, mouseY, delta);
-			view.popPose();
-			RenderSystem.applyModelViewMatrix();
+			hideStack = false;
+
+			float scale = getScale();
+			matrices.translate(x, y, 0);
+			matrices.scale(scale, scale, scale);
+			matrices.translate(-x, -y, 0);
+
+			getStack().render(matrices, bounds.x() + 1, bounds.y() + 1, delta);
+			matrices.popPose();
 		}
 	}
 }

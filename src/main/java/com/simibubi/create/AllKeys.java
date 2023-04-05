@@ -42,7 +42,7 @@ public enum AllKeys {
 	public static void fixBinds() {
 		long window = Minecraft.getInstance().getWindow().getWindow();
 		for (AllKeys key : values()) {
-			if (key.keybind == null)
+			if (key.keybind == null || key.keybind.isUnbound())
 				continue;
 			key.keybind.setDown(InputConstants.isKeyDown(window, key.getBoundCode()));
 		}

@@ -83,13 +83,8 @@ public class BasinRecipe extends ProcessingRecipe<SmartInventory> {
 		List<FluidIngredient> fluidIngredients =
 			isBasinRecipe ? ((BasinRecipe) recipe).getFluidIngredients() : Collections.emptyList();
 
-		// fabric: get remainders before the inv changes
-		NonNullList<ItemStack> remainders = null;
-		if (recipe instanceof BasinRecipe basinRecipe) {
-			remainders = basinRecipe.getRemainingItems(basin.getInputInventory());
-		} else if (recipe instanceof CraftingRecipe craftingRecipe) {
-			remainders = craftingRecipe.getRemainingItems(new DummyCraftingContainer(availableItems));
-		}
+		// fabric: track consumed items to get remainders later
+		NonNullList<ItemStack> consumedItems = NonNullList.create();
 
 		try (Transaction t = TransferUtil.getTransaction()) {
 			Ingredients: for (Ingredient ingredient : ingredients) {
@@ -103,6 +98,7 @@ public class BasinRecipe extends ProcessingRecipe<SmartInventory> {
 						continue Ingredients;
 					long extracted = view.extract(var, 1, t);
 					if (extracted == 0) continue;
+					consumedItems.add(stack);
 					continue Ingredients;
 				}
 				// something wasn't found
@@ -139,18 +135,17 @@ public class BasinRecipe extends ProcessingRecipe<SmartInventory> {
 			if (recipe instanceof BasinRecipe basinRecipe) {
 				recipeOutputItems.addAll(basinRecipe.rollResults());
 				recipeOutputFluids.addAll(basinRecipe.getFluidResults());
+				recipeOutputItems.addAll(basinRecipe.getRemainingItems(basin.getInputInventory()));
 			} else {
 				recipeOutputItems.add(recipe.getResultItem());
-			}
 
-			// fabric: add remainders that were stored above
-			if (remainders != null) {
-				for (ItemStack remainder : remainders) {
-					if (!remainder.isEmpty()) {
-						recipeOutputItems.add(remainder);
-					}
+				if (recipe instanceof CraftingRecipe craftingRecipe) {
+					recipeOutputItems.addAll(craftingRecipe.getRemainingItems(new DummyCraftingContainer(consumedItems)));
 				}
 			}
+
+			// fabric: bad
+			recipeOutputItems.removeIf(ItemStack::isEmpty);
 
 			if (!basin.acceptOutputs(recipeOutputItems, recipeOutputFluids, t))
 				return false;

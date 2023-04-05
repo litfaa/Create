@@ -51,7 +51,7 @@ public class ItemDrainTileEntity extends SmartTileEntity implements IHaveGoggleI
 	SnapshotParticipant<TransportedItemStack> snapshotParticipant = new SnapshotParticipant<>() {
 		@Override
 		protected TransportedItemStack createSnapshot() {
-			return heldItem == null ? TransportedItemStack.EMPTY : heldItem.copy();
+			return heldItem == null ? TransportedItemStack.EMPTY : heldItem.fullCopy();
 		}
 
 		@Override

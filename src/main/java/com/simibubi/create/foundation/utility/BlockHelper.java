@@ -8,8 +8,12 @@ import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.contraptions.base.KineticTileEntity;
 import com.simibubi.create.foundation.tileEntity.IMergeableTE;
 
+import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
 import io.github.fabricators_of_create.porting_lib.util.PlantUtil;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
@@ -80,9 +84,14 @@ public class BlockHelper {
 		return blockState;
 	}
 
-	public static int findAndRemoveInInventory(BlockState block, Player player, int amount) {
-		int amountFound = 0;
-		Item required = getRequiredItem(block).getItem();
+	public static int simulateFindAndRemoveInInventory(BlockState block, Player player, long amount) {
+		try (Transaction t = TransferUtil.getTransaction()) {
+			return findAndRemoveInInventory(block, player, amount);
+		}
+	}
+
+	public static int findAndRemoveInInventory(BlockState block, Player player, long amount) {
+		ItemVariant required = ItemVariant.of(getRequiredItem(block));
 
 		boolean needsTwo = block.hasProperty(BlockStateProperties.SLAB_TYPE)
 			&& block.getValue(BlockStateProperties.SLAB_TYPE) == SlabType.DOUBLE;
@@ -96,46 +105,20 @@ public class BlockHelper {
 		if (block.hasProperty(BlockStateProperties.PICKLES))
 			amount *= block.getValue(BlockStateProperties.PICKLES);
 
-		{
-			// Try held Item first
-			int preferredSlot = player.getInventory().selected;
-			ItemStack itemstack = player.getInventory()
-				.getItem(preferredSlot);
-			int count = itemstack.getCount();
-			if (itemstack.getItem() == required && count > 0) {
-				int taken = Math.min(count, amount - amountFound);
-				player.getInventory()
-					.setItem(preferredSlot, new ItemStack(itemstack.getItem(), count - taken));
-				amountFound += taken;
+		try (Transaction t = TransferUtil.getTransaction()) {
+			PlayerInventoryStorage storage = PlayerInventoryStorage.of(player);
+			int amountFound = (int) storage.extract(required, amount, t);
+
+			if (needsTwo) {
+				// Give back 1 if uneven amount was removed
+				if (amountFound % 2 != 0)
+					storage.insert(required, 1, t);
+				amountFound /= 2;
 			}
+
+			t.commit();
+			return amountFound;
 		}
-
-		// Search inventory
-		for (int i = 0; i < player.getInventory()
-			.getContainerSize(); ++i) {
-			if (amountFound == amount)
-				break;
-
-			ItemStack itemstack = player.getInventory()
-				.getItem(i);
-			int count = itemstack.getCount();
-			if (itemstack.getItem() == required && count > 0) {
-				int taken = Math.min(count, amount - amountFound);
-				player.getInventory()
-					.setItem(i, new ItemStack(itemstack.getItem(), count - taken));
-				amountFound += taken;
-			}
-		}
-
-		if (needsTwo) {
-			// Give back 1 if uneven amount was removed
-			if (amountFound % 2 != 0)
-				player.getInventory()
-					.add(new ItemStack(required));
-			amountFound /= 2;
-		}
-
-		return amountFound;
 	}
 
 	public static ItemStack getRequiredItem(BlockState state) {

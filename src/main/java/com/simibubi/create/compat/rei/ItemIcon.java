@@ -8,7 +8,6 @@ import com.simibubi.create.foundation.gui.element.GuiGameElement;
 
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.Renderer;
-import mezz.jei.api.gui.drawable.IDrawable;
 import net.minecraft.world.item.ItemStack;
 
 public class ItemIcon implements Renderer {

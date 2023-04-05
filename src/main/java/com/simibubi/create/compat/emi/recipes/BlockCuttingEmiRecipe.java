@@ -3,10 +3,9 @@ package com.simibubi.create.compat.emi.recipes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.simibubi.create.compat.emi.CreateEmiAnimations;
-
 import org.apache.commons.compress.utils.Lists;
 
+import com.simibubi.create.compat.emi.CreateEmiAnimations;
 import com.simibubi.create.compat.emi.recipes.BlockCuttingEmiRecipe.CondensedBlockCuttingRecipe;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.item.ItemHelper;
@@ -43,7 +42,7 @@ public class BlockCuttingEmiRecipe extends CreateEmiRecipe<CondensedBlockCutting
 		for (int i = 0; i < results.size(); i++) {
 			int x = (i % 5) * 19;
 			int y = (i / 5) * -19;
-			addChancedSlot(widgets, EmiStack.of(results.get(i).get(0)), 77 + x, 47 + y, i).recipeContext(this);
+			addSlot(widgets, EmiStack.of(results.get(i).get(0)), 77 + x, 47 + y).recipeContext(this);
 		}
 
 		CreateEmiAnimations.addSaw(widgets, 33, 37);

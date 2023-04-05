@@ -201,7 +201,7 @@ public class SymmetryWandItem extends Item {
 		if (mirrorPos.distanceTo(Vec3.atLowerCornerOf(pos)) > AllConfigs.SERVER.curiosities.maxSymmetryWandRange.get())
 			return;
 		if (!player.isCreative() && isHoldingBlock(player, block)
-			&& BlockHelper.findAndRemoveInInventory(block, player, 1) == 0)
+			&& BlockHelper.simulateFindAndRemoveInInventory(block, player, 1) == 0) // fabric: simulate since the first block will already be removed
 			return;
 
 		symmetry.process(blockSet);
