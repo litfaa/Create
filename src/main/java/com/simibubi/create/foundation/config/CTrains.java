@@ -32,22 +32,22 @@ public class CTrains extends ConfigBase {
 	}
 
 	private static class Comments {
-		static String mps = "[in Blocks/Second]";
-		static String acc = "[in Blocks/Second²]";
-		static String trainTopSpeed = "The top speed of any assembled Train.";
-		static String trainTurningTopSpeed = "The top speed of Trains during a turn.";
-		static String trainAcceleration = "The acceleration of any assembled Train.";
-		static String poweredTrainTopSpeed = "The top speed of powered Trains.";
-		static String poweredTrainTurningTopSpeed = "The top speed of powered Trains during a turn.";
-		static String poweredTrainAcceleration = "The acceleration of powered Trains.";
-		static String trainsCauseDamage = "Whether moving Trains can hurt colliding mobs and players.";
-		static String maxTrackPlacementLength = "Maximum length of track that can be placed as one batch or turn.";
-		static String maxAssemblyLength = "Maximum length of a Train Stations' assembly track.";
-		static String maxBogeyCount = "Maximum amount of bogeys assembled as a single Train.";
-		static String manualTrainSpeedModifier = "Relative speed of a manually controlled Train compared to a Scheduled one.";
-		static String trainStressAmount = "Amount of stress Train couplings can handle.";
-		static String disableTrackPlacementLimits = "Disable the checks when placing tracks.";
-		static String wrenchMoveDistance = "Maximum distance a wrench can move a train.";
+	static String mps = "[in Blocks/Second] [方块/秒]";
+	static String acc = "[in Blocks/Second²] [方块/秒²]";
+	static String trainTopSpeed = "The top speed of any assembled Train. 组装火车的最高速度。";
+	static String trainTurningTopSpeed = "The top speed of Trains during a turn. 火车在拐弯时的最高速度。";
+	static String trainAcceleration = "The acceleration of any assembled Train. 组装火车的加速度。";
+	static String poweredTrainTopSpeed = "The top speed of powered Trains. 电力火车的最高速度。";
+	static String poweredTrainTurningTopSpeed = "The top speed of powered Trains during a turn. 电力火车在拐弯时的最高速度。";
+	static String poweredTrainAcceleration = "The acceleration of powered Trains. 电力火车的加速度。";
+	static String trainsCauseDamage = "Whether moving Trains can hurt colliding mobs and players. 移动中的火车是否会伤害相撞的生物和玩家。";
+	static String maxTrackPlacementLength = "Maximum length of track that can be placed as one batch or turn. 可以一次性或批量放置的轨道的最大长度。";
+	static String maxAssemblyLength = "Maximum length of a Train Stations' assembly track. 火车站组装轨道的最大长度。";
+	static String maxBogeyCount = "Maximum amount of bogeys assembled as a single Train. 单个火车组装的轮架数量上限。";
+	static String manualTrainSpeedModifier = "Relative speed of a manually controlled Train compared to a Scheduled one. 手动控制的火车相对于自动控制的火车的速度比例。";
+	static String trainStressAmount = "Amount of stress Train couplings can handle. 火车耐受压力耦合装置的数量。";
+	static String disableTrackPlacementLimits = "Disable the checks when placing tracks. 禁用放置轨道时的检查。";
+	static String wrenchMoveDistance = "Maximum distance a wrench can move a train. 扳手移动火车的最大距离。";
 	}
 
 }
