@@ -182,7 +182,7 @@ public class StationEditPacket extends TileEntityConfigurationPacket<StationTile
 			Train train = station.getPresentTrain();
 			BlockPos trackPosition = te.edgePoint.getGlobalPosition();
 			ItemStack schedule = train == null ? ItemStack.EMPTY : train.runtime.returnSchedule();
-			if (train != null && !train.disassemble(te.getAssemblyDirection(), trackPosition.above()))
+			if (train != null && !train.disassemble(sender, te.getAssemblyDirection(), trackPosition.above()))
 				return false;
 			dropSchedule(sender, te, schedule);
 		}

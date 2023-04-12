@@ -69,6 +69,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -385,7 +386,7 @@ public class Train {
 			runtime.tick(level);
 			status.endOfTrack();
 
-		} else if (maxStress > 4) {
+		} else if (maxStress > AllConfigs.SERVER.trains.trainStressAmount.get()) {
 			speed = 0;
 			navigation.cancelNavigation();
 			runtime.tick(level);
@@ -688,7 +689,7 @@ public class Train {
 			AllAdvancements.TRAIN_CRASH_BACKWARDS.awardTo(backwardsDriver);
 	}
 
-	public boolean disassemble(Direction assemblyDirection, BlockPos pos) {
+	public boolean disassemble(ServerPlayer sender, Direction assemblyDirection, BlockPos pos) {
 		if (!canDisassemble())
 			return false;
 
@@ -725,7 +726,7 @@ public class Train {
 		}
 
 		Create.RAILWAYS.removeTrain(id);
-		AllPackets.channel.sendToClientsInCurrentServer(new TrainPacket(this, false));
+		AllPackets.channel.sendToClientsInServer(new TrainPacket(this, false), sender.server);
 		return true;
 	}
 

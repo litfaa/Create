@@ -9,6 +9,8 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
+import com.simibubi.create.foundation.config.AllConfigs;
+
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
 
@@ -82,7 +84,7 @@ public class TrainRelocator {
 			return false;
 
 		if (!player.position()
-			.closerThan(relocatingOrigin, 24) || player.isSteppingCarefully()) {
+			.closerThan(relocatingOrigin, AllConfigs.SERVER.trains.wrenchMoveDistance.get()) || player.isSteppingCarefully()) {
 			relocatingTrain = null;
 			player.displayClientMessage(Lang.translateDirect("train.relocate.abort")
 				.withStyle(ChatFormatting.RED), true);
